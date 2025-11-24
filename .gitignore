@@ -1,0 +1,49 @@
+# Environment & secrets
+.env
+.env.*
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+*.spec
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.coverage
+coverage.xml
+htmlcov/
+.DS_Store
+
+# Build outputs
+build/
+dist/
+pip-wheel-metadata/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / tooling
+.vscode/
+.idea/
+
+# Node / frontend
+node_modules/
+*.log
+.parcel-cache/
+
+# Databases & runtime files
+*.sqlite3
+*.db
+*.db-journal
+
+# Local overrides
+uv.lock

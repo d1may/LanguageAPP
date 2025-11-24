@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Wordle{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', path='/wordle.css') }}">
+{% endblock %}
+
+{% block body_class %}wordle-body{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="wordle-shell">
+  <section class="wordle-panel">
+    <div class="wordle-mode-picker">
+      <span class="mode-label">Choose mode</span>
+      <div class="mode-buttons">
+        <button type="button" class="mode-btn" data-size="4">4 letters</button>
+        <button type="button" class="mode-btn active" data-size="5">5 letters</button>
+        <button type="button" class="mode-btn" data-size="6">6 letters</button>
+      </div>
+    </div>
+
+    <div class="wordle-language-card">
+      <span class="muted">Word language</span>
+      <strong class="language-value" id="wordle-language">English</strong>
+    </div>
+
+    <header class="wordle-headline">
+      <div>
+        <h1>Let's play Wordle.</h1>
+        <p class="muted">Guess the hidden word in six tries. Letters change color to give you hints.</p>
+      </div>
+    </header>
+
+    <div class="wordle-board" role="grid" aria-label="Wordle board">
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile tile-correct" role="gridcell" aria-label="Correct letter W in correct spot">W</div>
+        <div class="tile tile-present" role="gridcell">O</div>
+        <div class="tile" role="gridcell">R</div>
+        <div class="tile tile-miss" role="gridcell">D</div>
+        <div class="tile" role="gridcell">S</div>
+      </div>
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile tile-miss" role="gridcell">S</div>
+        <div class="tile tile-correct" role="gridcell">T</div>
+        <div class="tile tile-present" role="gridcell">A</div>
+        <div class="tile" role="gridcell">R</div>
+        <div class="tile" role="gridcell">T</div>
+      </div>
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile" role="gridcell">T</div>
+        <div class="tile" role="gridcell">R</div>
+        <div class="tile" role="gridcell">A</div>
+        <div class="tile" role="gridcell">I</div>
+        <div class="tile" role="gridcell">N</div>
+      </div>
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+      </div>
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+      </div>
+      <div class="wordle-row" role="row" style="--cols:5">
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+        <div class="tile" role="gridcell"></div>
+      </div>
+    </div>
+
+    <div class="wordle-game-actions">
+      <button type="button" class="wordle-start-btn" id="wordle-start">Start</button>
+      <button type="button" class="wordle-send-btn ghost" id="wordle-send" hidden>Send</button>
+      <button type="button" class="wordle-again-btn ghost" id="wordle-again" hidden>Send</button>
+    </div>
+
+    <div class="wordle-alert" id="wordle-alert" hidden>Keep going! 3 attempts left.</div>
+
+    <div class="wordle-keyboard" id="wordle-keyboard" aria-label="On-screen keyboard" hidden></div>
+  </section>
+
+  <aside class="wordle-side">
+    <div class="wordle-card">
+      <h3>How to Play</h3>
+      <ol class="howto">
+        <li>Enter a valid five-letter word.</li>
+        <li>Letters turn <span class="badge badge-correct">teal</span> when they are in the correct spot.</li>
+        <li><span class="badge badge-present">Yellow</span> letters appear elsewhere in the word.</li>
+        <li><span class="badge badge-miss">Gray</span> means the letter is not in the target word.</li>
+      </ol>
+      <p class="muted">Practice daily to build your vocabulary streak.</p>
+    </div>
+
+    <div class="wordle-card">
+      <h3>Daily Wordle</h3>
+      <p class="muted">Guess the hidden word in six tries. Letters change color to give you hints.</p>
+      <div class="wordle-score">
+        <div class="score-item">
+          <span class="score-title">Played</span>
+          <strong>128</strong>
+        </div>
+        <div class="score-item">
+          <span class="score-title">Win %</span>
+          <strong>82</strong>
+        </div>
+        <div class="score-item">
+          <span class="score-title">Streak</span>
+          <strong>5</strong>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- Профільний drawer -->
+<div id="profile-drawer" class="profile-drawer">
+  <div class="drawer-backdrop" id="profile-backdrop"></div>
+  <aside class="drawer-panel">
+    <header class="drawer-header">
+      <div class="drawer-title">
+        <span class="drawer-avatar">👤</span>
+        <span>Profile settings</span>
+      </div>
+      <button id="btn-profile-close" class="icon-btn small" title="Close">✕</button>
+    </header>
+
+    <section class="drawer-body">
+      <div class="profile-hero">
+        <div class="hero-icon">🚀</div>
+        <div class="hero-copy">
+          <p class="hero-label">Keep growing</p>
+          <h3>Personalize your practice</h3>
+          <p class="hero-desc">Fine-tune the app to match your current focus.</p>
+        </div>
+      </div>
+
+      <div class="drawer-divider"></div>
+
+      <div class="setting-card">
+        <div class="setting-header">
+          <div>
+            <p class="setting-label">Random words language</p>
+            <p class="setting-desc">Choose which dictionary we pick daily surprises from.</p>
+          </div>
+          <span class="setting-tag">Vocabulary</span>
+        </div>
+
+        <div class="setting-options">
+          <label class="option-tile">
+            <input type="radio" name="rw-lang" value="en">
+            <div class="option-card">
+              <div>
+                <p class="option-title">English</p>
+                <p class="option-note">American + British mix</p>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+          </label>
+
+          <label class="option-tile">
+            <input type="radio" name="rw-lang" value="de">
+            <div class="option-card">
+              <div>
+                <p class="option-title">Deutsch</p>
+                <p class="option-note">Classic Goethe Institut set</p>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button id="btn-logout" class="drawer-logout">
+          <span>Logout</span>
+        </button>
+      </div>
+    </section>
+
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/wordle.js') }}"></script>
+{% endblock %}

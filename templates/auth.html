@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Login / Register{% endblock %}
+
+{% block content %}
+<section id="auth">
+  <div class="card">
+    <h1>Authorization</h1>
+
+    <nav>
+      <a href="#login" id="tab-login">Login</a>
+      <a href="#register" id="tab-register">Registration</a>
+    </nav>
+
+    <!-- LOGIN -->
+    <section id="page-login">
+      <form id="form-login">
+        <div>
+          <label>Email</label>
+          <input type="email" id="login-email" required>
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="login-password" minlength="8" required>
+        </div>
+        <button type="submit">Log in</button>
+        <div class="msg" id="login-msg" hidden></div>
+      </form>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="page-register" hidden>
+      <form id="form-register">
+        <div>
+          <label>Email</label>
+          <input type="email" id="reg-email" required>
+        </div>
+        <div>
+          <label>Username</label>
+          <input type="text" id="reg-username" minlength="3" required>
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="reg-password" minlength="8" required>
+        </div>
+        <button type="submit">Register</button>
+        <div class="hint">After registering, log in.</div>
+        <div class="msg" id="reg-msg" hidden></div>
+      </form>
+    </section>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/main-auth.js') }}"></script>
+{% endblock %}

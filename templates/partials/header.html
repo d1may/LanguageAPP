@@ -1,0 +1,19 @@
+<header class="app-topbar">
+  <div class="logo">Language</div>
+
+  <nav class="menu">
+    <a data-route="home"
+       class="{% if active_page|default('home') == 'home' %}active{% endif %}"
+       href="{{ url_for('dashboard') }}#home">Home</a>
+    <a data-route="random"
+       class="{% if active_page == 'random' %}active{% endif %}"
+       href="{{ url_for('dashboard') }}#random">Random Word</a>
+    <a data-route="wordle"
+       class="{% if active_page == 'wordle' %}active{% endif %}"
+       href="{{ url_for('wordle_page') }}">Wordle</a>
+  </nav>
+
+  <div class="user-area">
+    <button id="btn-profile" class="icon-btn" title="Profile">👤</button>
+  </div>
+</header>

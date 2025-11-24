@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Language{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main id="app-content">
+  <!-- HOME -->
+  <section id="page-home">
+    <div class="app-shell">
+      <div class="app-card">
+        <h2>Welcome!</h2>
+        <p class="muted">This is your English learning panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RANDOM WORD -->
+  <section id="page-random" hidden>
+    <div class="app-shell">
+      <div class="app-card">
+        <h2>Random Word</h2>
+        <div id="word" class="word-big">Word</div>
+        <div class="msg err" id="app-msg" hidden></div>
+        <button id="btn-word" class="ghost">Get word</button>
+        <button id="btn-trans" class="ghost">Translate this word</button>
+        <div id="translation-box" class="translation-box"></div>
+      </div>
+      <div class="rating-btns">
+        <button class="rate hard" data-rate="hard">Hard</button>
+        <button class="rate ok" data-rate="ok">OK</button>
+        <button class="rate easy" data-rate="easy">Easy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORDLE (заглушка) -->
+  <section id="page-wordle" hidden>
+    <div class="app-shell">
+      <div class="app-card">
+        <h2>Wordle (coming soon)</h2>
+        <p class="muted">Wordle (coming soon).</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Бокова панель профілю (drawer) -->
+<div id="profile-drawer" class="profile-drawer">
+  <div class="drawer-backdrop" id="profile-backdrop"></div>
+  <aside class="drawer-panel">
+    <header class="drawer-header">
+      <div class="drawer-title">
+        <span class="drawer-avatar">👤</span>
+        <span>Profile settings</span>
+      </div>
+      <button id="btn-profile-close" class="icon-btn small" title="Close">✕</button>
+    </header>
+
+    <section class="drawer-body">
+      <div class="profile-hero">
+        <div class="hero-icon">🚀</div>
+        <div class="hero-copy">
+          <p class="hero-label">Keep growing</p>
+          <h3>Personalize your practice</h3>
+          <p class="hero-desc">Fine-tune the app to match your current focus.</p>
+        </div>
+      </div>
+
+      <div class="drawer-divider"></div>
+
+      <div class="setting-card">
+        <div class="setting-header">
+          <div>
+            <p class="setting-label">Random words language</p>
+            <p class="setting-desc">Choose which dictionary we pick daily surprises from.</p>
+          </div>
+          <span class="setting-tag">Vocabulary</span>
+        </div>
+
+        <div class="setting-options">
+          <label class="option-tile">
+            <input type="radio" name="rw-lang" value="en">
+            <div class="option-card">
+              <div>
+                <p class="option-title">English</p>
+                <p class="option-note">American + British mix</p>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+          </label>
+
+          <label class="option-tile">
+            <input type="radio" name="rw-lang" value="de">
+            <div class="option-card">
+              <div>
+                <p class="option-title">Deutsch</p>
+                <p class="option-note">Classic Goethe Institut set</p>
+              </div>
+              <span class="option-check">✓</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button id="btn-logout" class="drawer-logout">
+          <span>Logout</span>
+        </button>
+      </div>
+    </section>
+
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/main-app.js') }}"></script>
+{% endblock %}
