@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Flashcard{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', path='/flashcard.css') }}">
+{% endblock %}
+
+{% block body_class %}flashcard{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="flashcard-shell">
+  <section class="flashcard-hero">
+    <div>
+      <p class="hero-label">Smart repetition</p>
+      <h1>Flashcard workouts</h1>
+      <p class="hero-desc">
+        Cycle through curated decks, flip cards to reveal translations, and grade how well you remember each phrase.
+      </p>
+      <div class="hero-actions">
+        <button class="btn primary">Start new session</button>
+        <button class="btn ghost">Import deck</button>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <p class="stat-label">Due today</p>
+        <p class="stat-value">18 cards</p>
+        <span class="trend up">+5 since yesterday</span>
+      </div>
+      <div class="stat-card alt">
+        <p class="stat-label">Streak</p>
+        <p class="stat-value">7 days</p>
+        <span class="trend neutral">Keep it going 🔥</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="flashcard-body">
+    <aside class="deck-panel">
+      <header class="panel-head">
+        <div>
+          <p class="panel-label">Decks</p>
+          <h2>Pick focus</h2>
+        </div>
+        <button class="icon-btn small ghost">＋</button>
+      </header>
+
+      <div class="deck-filter">
+        <input type="search" placeholder="Search decks…">
+      </div>
+
+      <ul class="deck-list">
+        <li class="deck-item active">
+          <div>
+            <p class="deck-title">Business idioms</p>
+            <p class="deck-meta">32 cards · Updated 2d ago</p>
+          </div>
+          <span class="deck-progress">68%</span>
+        </li>
+        <li class="deck-item">
+          <div>
+            <p class="deck-title">Travel essentials</p>
+            <p class="deck-meta">18 cards · Beginner</p>
+          </div>
+          <span class="deck-progress">40%</span>
+        </li>
+        <li class="deck-item">
+          <div>
+            <p class="deck-title">Phrasal verbs</p>
+            <p class="deck-meta">54 cards · Intermediate</p>
+          </div>
+          <span class="deck-progress">52%</span>
+        </li>
+        <li class="deck-item">
+          <div>
+            <p class="deck-title">German A2 verbs</p>
+            <p class="deck-meta">26 cards · Deutsch</p>
+          </div>
+          <span class="deck-progress">12%</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="card-panel">
+      <header class="panel-head card-head">
+        <div>
+          <p class="panel-label">Now studying</p>
+          <h2>Business idioms</h2>
+        </div>
+        <div class="chip-list">
+          <span class="chip">12 learned</span>
+          <span class="chip ghost">8 tricky</span>
+        </div>
+      </header>
+
+      <div class="active-card">
+        <div class="card-face front">
+          <p class="card-label">Front</p>
+          <h3>Touch base</h3>
+          <p class="card-desc">Have a quick check-in or update.</p>
+        </div>
+        <div class="card-face back">
+          <p class="card-label">Back</p>
+          <h3>Связаться / обсудить</h3>
+          <p class="card-desc">Используйте, когда хотите уточнить прогресс или договориться о дальнейших шагах.</p>
+        </div>
+        <button class="card-toggle">Flip card</button>
+      </div>
+
+      <div class="review-actions">
+        <button class="btn ghost danger">Again</button>
+        <button class="btn ghost">Almost</button>
+        <button class="btn primary">Got it</button>
+      </div>
+
+      <div class="session-footer">
+        <p class="muted">Card 4 of 18 · Next review in 7 min</p>
+        <button class="link-btn">See schedule →</button>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

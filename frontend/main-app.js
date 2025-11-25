@@ -2,29 +2,10 @@ import { api, qs, show, PATHS } from "./api.js";
 
 let currentLang = "en";
 
-/* ===================== NAVIGATION ===================== */
-
-function switchPage() {
-  const hash = window.location.hash || "#home";
-  const route = hash.replace("#", "") || "home";
-
-  const pages = {
-    "#home": "#page-home",
-    "#random": "#page-random",
-    "#wordle": "#page-wordle",
-  };
-
-  // спрятать все страницы
-  Object.values(pages).forEach((id) => show(qs(id), false));
-
-  // показать активную
-  const activeId = pages[hash] || "#page-home";
-  show(qs(activeId), true);
-
-  // подсветка табов
-  document.querySelectorAll(".menu a[data-route]").forEach((a) => {
-    a.classList.toggle("active", a.dataset.route === route);
-  });
+function updateLangBadge() {
+  const badge = qs("#word-lang");
+  if (!badge) return;
+  badge.textContent = currentLang === "de" ? "German" : "English";
 }
 
 /* ===================== BOOTSTRAP ===================== */
@@ -43,6 +24,7 @@ async function loadSettings() {
   try {
     const data = await api(PATHS.settings, "GET");
     currentLang = data.random_word_lang || "en";
+    updateLangBadge();
 
     // отметить правильный радио-инпут
     const inputs = document.querySelectorAll('input[name="rw-lang"]');
@@ -52,6 +34,7 @@ async function loadSettings() {
   } catch (err) {
     console.error("Failed to load settings:", err.message);
     currentLang = "en";
+    updateLangBadge();
   }
 }
 
@@ -59,8 +42,6 @@ async function loadSettings() {
 
 document.addEventListener("DOMContentLoaded", () => {
   bootstrap();
-  switchPage();
-  window.addEventListener("hashchange", switchPage);
 
   // ----- Random word -----
   const btnWord = qs("#btn-word");
@@ -130,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
           random_word_lang: newLang,
         });
         currentLang = data.random_word_lang;
+        updateLangBadge();
       } catch (err) {
         console.error("Failed to update settings:", err.message);
         // откатить UI назад

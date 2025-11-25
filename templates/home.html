@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Language · Home{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', path='/home.css') }}">
+{% endblock %}
+
+{% block body_class %}home{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="home-shell">
+  <section class="home-hero">
+    <div>
+      <p class="section-label">Language coach</p>
+      <h1>Keep your streak glowing</h1>
+      <p class="muted">
+        Shuffle vocabulary, challenge Wordle, or drill flashcards — all in one cozy place.
+      </p>
+      <div class="hero-actions">
+        <a href="{{ url_for('random_page') }}" class="btn primary">Start with Random Word</a>
+        <a href="{{ url_for('wordle_page') }}" class="btn ghost">Play Wordle</a>
+      </div>
+    </div>
+    <div class="home-focus-card">
+      <p class="focus-label">Today's focus</p>
+      <h3>Consistency</h3>
+      <p class="focus-desc">Spend at least 10 minutes in any mode to extend your streak.</p>
+      <button class="link-btn">View schedule →</button>
+    </div>
+  </section>
+
+  <section class="home-grid">
+    <article class="home-tile">
+      <div class="tile-icon">🎯</div>
+      <h3>Daily word goals</h3>
+      <p>Get 10 fresh words and tag their difficulty to train the algorithm.</p>
+      <a class="tile-link" href="{{ url_for('random_page') }}">Open Random Word</a>
+    </article>
+    <article class="home-tile">
+      <div class="tile-icon">🧩</div>
+      <h3>Flashcard workouts</h3>
+      <p>Flip bilingual cards, grade responses, and watch your mastery climb.</p>
+      <a class="tile-link" href="{{ url_for('flashcard_page') }}">Try Flashcards</a>
+    </article>
+    <article class="home-tile">
+      <div class="tile-icon">✨</div>
+      <h3>Wordle challenge</h3>
+      <p>Practice spelling intuition with a daily Wordle puzzle tailored to you.</p>
+      <a class="tile-link" href="{{ url_for('wordle_page') }}">Play now</a>
+    </article>
+  </section>
+
+  <section class="home-stats">
+    <div class="home-stat-card">
+      <p class="home-stat-label">Streak</p>
+      <p class="home-stat-value">7 days</p>
+      <span class="trend neutral">Keep going</span>
+    </div>
+    <div class="home-stat-card alt">
+      <p class="home-stat-label">Words logged</p>
+      <p class="home-stat-value">132</p>
+      <span class="trend up">+18 this week</span>
+    </div>
+    <div class="home-stat-card">
+      <p class="home-stat-label">Sessions</p>
+      <p class="home-stat-value">4</p>
+      <span class="trend neutral">Today</span>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/main-app.js') }}"></script>
+{% endblock %}

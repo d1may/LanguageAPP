@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Language · Random Word{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', path='/random.css') }}">
+{% endblock %}
+
+{% block body_class %}random{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="random-shell">
+  <section class="random-hero">
+    <div>
+      <p class="section-label">Daily discovery</p>
+      <h2>Random Word Lab</h2>
+      <p class="muted">Jump into a curated stream of English or German vocabulary and build context with one tap.</p>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-chip">
+        <span class="meta-title">Current deck</span>
+        <span id="word-lang" class="meta-value">English</span>
+      </div>
+      <div class="meta-chip">
+        <span class="meta-title">Session words</span>
+        <span class="meta-value">0/10</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="random-grid">
+    <div class="word-panel">
+      <header class="word-head">
+        <div>
+          <p class="section-label">Your word</p>
+          <h3>Tap generate to refresh</h3>
+        </div>
+        <button id="btn-word" class="btn primary">Generate word</button>
+      </header>
+
+      <div class="word-display" id="word">Word</div>
+      <div class="msg err" id="app-msg" hidden></div>
+
+      <div class="word-actions">
+        <button id="btn-trans" class="btn ghost">Translate</button>
+        <button class="btn ghost" type="button">Add to deck</button>
+      </div>
+
+      <div id="translation-box" class="translation-box"></div>
+    </div>
+
+    <aside class="word-side">
+      <div class="tip-card">
+        <p class="section-label">Hints</p>
+        <p class="tip-title">Rate each draw</p>
+        <p class="muted">Mark how confident you feel. We’ll use it to prioritize future reviews.</p>
+      </div>
+
+      <div class="rating-panel">
+        <p class="section-label">Difficulty</p>
+        <div class="rating-btns">
+          <button class="rate hard" data-rate="hard">Hard</button>
+          <button class="rate ok" data-rate="ok">OK</button>
+          <button class="rate easy" data-rate="easy">Easy</button>
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/main-app.js') }}"></script>
+{% endblock %}

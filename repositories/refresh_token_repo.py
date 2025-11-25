@@ -44,7 +44,10 @@ class RefreshTokenRepository:
             raise PermissionError("Refresh token is not registered")
         if token.revoked:
             raise PermissionError("Refresh token has been revoked")
-        if token.expires_at <= now:
+        expires_at = token.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at <= now:
             token.mark_revoked()
             self.db.add(token)
             self._commit()

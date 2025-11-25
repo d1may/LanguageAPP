@@ -39,7 +39,11 @@ app.include_router(wordle_check_router.router)
 
 @app.get("/", response_class=HTMLResponse, name="dashboard")
 async def dashboard(request: Request):
-    return templates.TemplateResponse("app.html", {"request": request, "active_page": "home"})
+    return templates.TemplateResponse("home.html", {"request": request, "active_page": "home"})
+
+@app.get("/random", response_class=HTMLResponse, name="random_page")
+async def random_page(request: Request):
+    return templates.TemplateResponse("random.html", {"request": request, "active_page": "random"})
 
 @app.get("/wordle", response_class=HTMLResponse, name="wordle_page")
 async def wordle_page(request: Request):
@@ -48,6 +52,10 @@ async def wordle_page(request: Request):
 @app.get("/auth", response_class=HTMLResponse, name="auth_page")
 async def auth_page(request: Request):
     return templates.TemplateResponse("auth.html", {"request": request})
+
+@app.get("/flashcard", response_class=HTMLResponse, name="flashcard_page")
+async def flashcard_page(request: Request):
+    return templates.TemplateResponse("flashcard.html", {"request": request, "active_page": "flashcard"})
 
 @app.get("/status")
 async def status():

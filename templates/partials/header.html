@@ -4,16 +4,19 @@
   <nav class="menu">
     <a data-route="home"
        class="{% if active_page|default('home') == 'home' %}active{% endif %}"
-       href="{{ url_for('dashboard') }}#home">Home</a>
+       href="{{ url_for('dashboard') }}">Home</a>
     <a data-route="random"
        class="{% if active_page == 'random' %}active{% endif %}"
-       href="{{ url_for('dashboard') }}#random">Random Word</a>
+       href="{{ url_for('random_page') }}">Random</a>
     <a data-route="wordle"
        class="{% if active_page == 'wordle' %}active{% endif %}"
        href="{{ url_for('wordle_page') }}">Wordle</a>
+    <a data-route="flashcard"
+       class="{% if active_page == 'flashcard' %}active{% endif %}"
+       href="{{ url_for('flashcard_page') }}">Flashcard</a>
   </nav>
 
   <div class="user-area">
-    <button id="btn-profile" class="icon-btn" title="Profile">👤</button>
+    <button id="btn-profile" class="icon-btn" title="Profile"><i class="bi bi-person-fill"></i></button>
   </div>
 </header>
