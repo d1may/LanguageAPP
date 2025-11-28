@@ -1,6 +1,8 @@
 import { api, PATHS, qs } from "./api.js";
+import { applyTheme, getActiveTheme } from "./theme.js";
 
 let currentLang = "en";
+let currentTheme = getActiveTheme();
 let currentMode = 5;
 let initialBoardState = "";
 const WORDLE_ATTEMPTS = 6;
@@ -45,11 +47,15 @@ async function loadSettings() {
   try {
     const data = await api(PATHS.settings, "GET");
     currentLang = data.random_word_lang || "en";
+    currentTheme = data.theme || currentTheme;
   } catch (err) {
     console.error("Failed to load settings:", err.message);
     currentLang = "en";
+    currentTheme = getActiveTheme();
   } finally {
     updateLanguageUI();
+    applyTheme(currentTheme);
+    updateThemeRadios();
   }
 }
 
@@ -59,9 +65,18 @@ function updateLanguageUI() {
     label.textContent = LANG_LABEL[currentLang] || LANG_LABEL.en;
   }
 
-  const inputs = document.querySelectorAll('input[name="rw-lang"]');
-  inputs.forEach((input) => {
+  langInputs = Array.from(document.querySelectorAll('input[name="rw-lang"]'));
+  langInputs.forEach((input) => {
     input.checked = input.value === currentLang;
+  });
+}
+
+function updateThemeRadios() {
+  if (!themeInputs.length) {
+    themeInputs = Array.from(document.querySelectorAll('input[name="app-theme"]'));
+  }
+  themeInputs.forEach((input) => {
+    input.checked = input.value === currentTheme;
   });
 }
 
@@ -83,7 +98,8 @@ function setupProfileDrawer() {
   const btnProfile = qs("#btn-profile");
   const btnProfileClose = qs("#btn-profile-close");
   const backdrop = qs("#profile-backdrop");
-  const langInputs = document.querySelectorAll('input[name="rw-lang"]');
+  langInputs = Array.from(document.querySelectorAll('input[name="rw-lang"]'));
+  themeInputs = Array.from(document.querySelectorAll('input[name="app-theme"]'));
 
   function openDrawer() {
     drawer?.classList.add("open");
@@ -105,15 +121,43 @@ function setupProfileDrawer() {
       try {
         const data = await api(PATHS.settings, "PUT", {
           random_word_lang: newLang,
+          theme: currentTheme,
         });
         currentLang = data.random_word_lang || newLang;
+        currentTheme = data.theme || currentTheme;
         updateLanguageUI();
+        applyTheme(currentTheme);
+        updateThemeRadios();
       } catch (err) {
         console.error("Failed to update language:", err.message);
         updateLanguageUI();
+        updateThemeRadios();
       }
     });
   });
+
+  themeInputs.forEach((input) => {
+    input.addEventListener("change", async () => {
+      if (!input.checked) return;
+      const newTheme = input.value;
+      try {
+        const data = await api(PATHS.settings, "PUT", {
+          random_word_lang: currentLang,
+          theme: newTheme,
+        });
+        currentLang = data.random_word_lang || currentLang;
+        currentTheme = data.theme || newTheme;
+        applyTheme(currentTheme);
+        updateLanguageUI();
+        updateThemeRadios();
+      } catch (err) {
+        console.error("Failed to update theme:", err.message);
+        updateThemeRadios();
+      }
+    });
+  });
+
+  updateThemeRadios();
 }
 
 function setupGameControls() {
@@ -418,3 +462,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupModeButtons();
   setupKeyboardInput();
 });
+let themeInputs = [];
+let langInputs = [];

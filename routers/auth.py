@@ -216,7 +216,10 @@ async def get_settings(
     user_id = int(payload.sub)
     user = db.get(User, user_id)
 
-    return UserSettingsOut(random_word_lang=user.random_word_lang or "en")
+    return UserSettingsOut(
+        random_word_lang=user.random_word_lang or "en",
+        theme=user.theme or "amber",
+    )
 
 
 @router.put(
@@ -233,8 +236,12 @@ async def update_settings(
     user = db.get(User, user_id)
 
     user.random_word_lang = data.random_word_lang
+    user.theme = data.theme
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    return UserSettingsOut(random_word_lang=user.random_word_lang)
+    return UserSettingsOut(
+        random_word_lang=user.random_word_lang,
+        theme=user.theme,
+    )
