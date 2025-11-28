@@ -19,19 +19,29 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "refresh_tokens",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("jti", sa.String(length=64), nullable=False),
-        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("revoked", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.UniqueConstraint("jti", name="uq_refresh_tokens_jti"),
-    )
-    op.create_index("ix_refresh_tokens_user_id", "refresh_tokens", ["user_id"])
-    op.create_index("ix_refresh_tokens_jti", "refresh_tokens", ["jti"], unique=True)
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    table_names = inspector.get_table_names()
+
+    if "refresh_tokens" not in table_names:
+        op.create_table(
+            "refresh_tokens",
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+            sa.Column("jti", sa.String(length=64), nullable=False),
+            sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+            sa.Column("revoked", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+            sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+            sa.UniqueConstraint("jti", name="uq_refresh_tokens_jti"),
+        )
+
+    existing_indexes = {idx["name"] for idx in inspector.get_indexes("refresh_tokens")}
+
+    if "ix_refresh_tokens_user_id" not in existing_indexes:
+        op.create_index("ix_refresh_tokens_user_id", "refresh_tokens", ["user_id"])
+    if "ix_refresh_tokens_jti" not in existing_indexes:
+        op.create_index("ix_refresh_tokens_jti", "refresh_tokens", ["jti"], unique=True)
 
 
 def downgrade() -> None:

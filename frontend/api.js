@@ -5,11 +5,13 @@ export const PATHS = {
   login: "/user/login",
   register: "/user/register",
   me: "/user/me",
-  randomWord: "/words/",
+  randomWord: "/words/random/",
+  wordLibrary: "/words/library",
   settings: "/user/settings",
   logout: "/user/logout",
   wordleCheck: "/wordle/check",
   wordleRandom: "/wordle_random_word",
+  wordRating: "/words/rate",
 };
 
 export const qs = (s) => document.querySelector(s);

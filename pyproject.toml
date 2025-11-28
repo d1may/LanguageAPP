@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "project"
 version = "0.1.0"
@@ -18,5 +22,23 @@ dependencies = [
     "pydantic[email]",
     "uvicorn[standard]>=0.38.0",
     "authx>=1.4.3",
+    "httpx",
     "jinja2>=3.1.6",
+]
+
+[tool.setuptools.packages.find]
+include = [
+    "alembic*",
+    "core*",
+    "models*",
+    "repositories*",
+    "routers*",
+    "schemas*",
+    "services*",
+]
+exclude = [
+    "frontend*",
+    "templates*",
+    "img*",
+    "tests*",
 ]

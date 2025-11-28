@@ -48,7 +48,7 @@
 
       <div class="word-actions">
         <button id="btn-trans" class="btn ghost">Translate</button>
-        <button class="btn ghost" type="button">Add to deck</button>
+        <button id="btn-add-deck" class="btn ghost" type="button">Add to deck</button>
       </div>
 
       <div id="translation-box" class="translation-box"></div>
@@ -70,6 +70,58 @@
         </div>
       </div>
     </aside>
+  </section>
+
+  <section class="word-library">
+    <div class="library-head">
+      <div>
+        <p class="section-label">Library preview</p>
+        <h3>Library snapshot</h3>
+        <p class="muted">
+          Single table view with quick sorting. We currently show the 10 latest words
+          plus 10 words per rating bucket. Data comes directly from your deck.
+        </p>
+      </div>
+      <button type="button" id="btn-refresh-library" class="btn ghost">
+        Refresh data
+      </button>
+    </div>
+
+    <div class="library-controls">
+      <p class="muted-small">Sort menu</p>
+      <div class="library-menu" role="tablist">
+        <button class="menu-btn active" data-library-filter="recent" role="tab">
+          10 recent
+        </button>
+        <button class="menu-btn" data-library-filter="high" role="tab">
+          10 confident
+        </button>
+        <button class="menu-btn" data-library-filter="medium" role="tab">
+          10 medium
+        </button>
+        <button class="menu-btn" data-library-filter="low" role="tab">
+          10 difficult
+        </button>
+      </div>
+    </div>
+
+    <div class="word-table-shell">
+      <table class="word-table">
+        <thead>
+          <tr>
+            <th>Word</th>
+            <th>Translation</th>
+            <th>Comment</th>
+            <th>Rating</th>
+          </tr>
+        </thead>
+        <tbody id="word-library-body">
+          <tr>
+            <td colspan="4" class="word-table-empty">Loading demo words…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </main>
 {% endblock %}
