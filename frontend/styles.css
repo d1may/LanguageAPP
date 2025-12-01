@@ -266,6 +266,8 @@ button{
   padding:14px 16px;
   display:flex;
   flex-direction:column;
+  overflow-y:auto;
+  overscroll-behavior:contain;
   transform:translateX(100%);
   transition:transform .23s ease-out;
 }

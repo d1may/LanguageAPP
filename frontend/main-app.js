@@ -402,22 +402,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showTranslation(text) {
     const box = qs("#translation-box");
+    if (!box) return;
+    const safe = escapeHtml(text || "—");
 
     box.innerHTML = `
-      <b>Translation:</b> <code>${text}</code>`;
+      <b>Translation:</b> <code>${safe}</code>`;
 
     box.classList.add("show");
-
-    // hide animation after 5 seconds but keep the box
-    setTimeout(() => {
-      box.classList.remove("show");
-    }, 5000);
   }
 
   if (btnTranslate) {
     btnTranslate.addEventListener("click", async () => {
       const word = qs("#word").innerText.trim();
       if (!word || word === "—") return;
+
+      const translationBox = qs("#translation-box");
+      if (translationBox) {
+        translationBox.innerHTML = "<b>Translation:</b> <em>Translating…</em>";
+        translationBox.classList.add("show");
+      }
 
       let source, target;
 
@@ -441,6 +444,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       } catch (err) {
         console.error("Translate error:", err);
+        if (translationBox) {
+          translationBox.innerHTML = `<b>Translation:</b> <code>Error: ${escapeHtml(err.message || "Unknown error")}</code>`;
+          translationBox.classList.add("show");
+        }
       }
     });
   }

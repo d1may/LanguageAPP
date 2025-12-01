@@ -2,7 +2,7 @@
   --tile-border:#4c2a1a;
   --tile-bg:#1b0f08;
   --tile-correct:#f38323;
-  --tile-present:#e4ba4d;
+  --tile-present:#f2cd5c;
   --tile-miss:#2a1810;
   --wordle-tile-size:68px;
   --keyboard-key-width:56px;
@@ -177,7 +177,7 @@
 .tile-present{
   background:var(--tile-present);
   border-color:var(--tile-present);
-  color:#3a1f02;
+  color:#3b1b02;
 }
 
 .tile-miss{
@@ -283,7 +283,7 @@
 
 .key[data-state="present"]{
   background:var(--tile-present);
-  color:#3a1f02;
+  color:#3b1b02;
 }
 
 .key[data-state="miss"]{
@@ -318,7 +318,7 @@
 
 .badge-present{
   background:var(--tile-present);
-  color:#3a1f02;
+  color:#3b1b02;
 }
 
 .badge-miss{
