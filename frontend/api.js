@@ -12,6 +12,10 @@ export const PATHS = {
   wordleCheck: "/wordle/check",
   wordleRandom: "/wordle_random_word",
   wordRating: "/words/rate",
+  flashcardDecks: "/flashcard/decks",
+  flashcardDeck: (deckId) => `/flashcard/decks/${deckId}`,
+  flashcardDeckWords: (deckId) => `/flashcard/decks/${deckId}/words`,
+  flashcardDeckWord: (deckId, wordId) => `/flashcard/decks/${deckId}/words/${wordId}`,
 };
 
 export const qs = (s) => document.querySelector(s);

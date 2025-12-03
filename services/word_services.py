@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from models.user import WordList
-from repositories.word_repo import WordRepository
+from models.randomWordList import WordList
+from repositories.random_word_repo import WordRepository
 
 
 class WordServices:

@@ -125,6 +125,44 @@
     </div>
   </section>
 </main>
+
+<div class="deck-modal" id="random-add-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="random-add-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">New card</p>
+        <h3 id="random-add-title">Add word to deck</h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <form class="deck-modal-form" id="random-add-form">
+      <label class="deck-field">
+        <span>Deck</span>
+        <select name="deck_id" required data-random-deck-select>
+          <option value="">Select a deck</option>
+        </select>
+      </label>
+      <label class="deck-field">
+        <span>Word</span>
+        <input type="text" name="word" placeholder="e.g. Momentum" maxlength="50" required data-random-word-input>
+      </label>
+      <label class="deck-field">
+        <span>Definition</span>
+        <textarea name="definition" rows="3" placeholder="Short explanation" maxlength="255" required></textarea>
+      </label>
+      <label class="deck-field">
+        <span>Example</span>
+        <textarea name="example" rows="2" placeholder="Optional usage example" maxlength="255"></textarea>
+      </label>
+      <div class="deck-modal-actions">
+        <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+        <button class="btn primary" type="submit">Save card</button>
+      </div>
+    </form>
+    <p class="deck-modal-hint" data-random-add-hint>Pick a deck to store this word.</p>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

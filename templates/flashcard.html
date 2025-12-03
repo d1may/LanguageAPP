@@ -49,84 +49,189 @@
           <p class="panel-label">Decks</p>
           <h2>Pick focus</h2>
         </div>
-        <button class="icon-btn small ghost">＋</button>
+        <button class="icon-btn small ghost" id="btn-open-deck-modal" type="button" aria-haspopup="dialog" aria-controls="deck-create-modal">＋</button>
       </header>
 
       <div class="deck-filter">
-        <input type="search" placeholder="Search decks…">
+        <input type="search" placeholder="Search decks…" data-deck-search autocomplete="off">
       </div>
 
-      <ul class="deck-list">
-        <li class="deck-item active">
-          <div>
-            <p class="deck-title">Business idioms</p>
-            <p class="deck-meta">32 cards · Updated 2d ago</p>
-          </div>
-          <span class="deck-progress">68%</span>
-        </li>
-        <li class="deck-item">
-          <div>
-            <p class="deck-title">Travel essentials</p>
-            <p class="deck-meta">18 cards · Beginner</p>
-          </div>
-          <span class="deck-progress">40%</span>
-        </li>
-        <li class="deck-item">
-          <div>
-            <p class="deck-title">Phrasal verbs</p>
-            <p class="deck-meta">54 cards · Intermediate</p>
-          </div>
-          <span class="deck-progress">52%</span>
-        </li>
-        <li class="deck-item">
-          <div>
-            <p class="deck-title">German A2 verbs</p>
-            <p class="deck-meta">26 cards · Deutsch</p>
-          </div>
-          <span class="deck-progress">12%</span>
-        </li>
-      </ul>
+      <ul class="deck-list" data-deck-list></ul>
+      <p class="deck-empty" data-deck-empty hidden>No decks yet. Create your first one!</p>
     </aside>
 
     <div class="card-panel">
-      <header class="panel-head card-head">
-        <div>
-          <p class="panel-label">Now studying</p>
-          <h2>Business idioms</h2>
+      <header class="panel-head card-head" data-active-deck-head hidden>
+        <div class="card-head-info">
+          <p class="panel-label" data-active-deck-meta>Deck focus</p>
+          <h2 data-active-deck-title>—</h2>
+          <div class="chip-list" data-word-stats hidden>
+            <span class="chip" data-word-count>0 cards</span>
+          </div>
         </div>
-        <div class="chip-list">
-          <span class="chip">12 learned</span>
-          <span class="chip ghost">8 tricky</span>
+        <div class="card-head-actions">
+          <button class="btn primary" type="button" id="btn-deck-study" disabled>Study</button>
+          <button class="btn secondary" type="button" id="btn-deck-add" disabled>Add</button>
+          <button class="btn tertiary" type="button" id="btn-deck-edit" disabled><i class="bi bi-pencil-square"></i></button>
+          <button class="btn destructive" type="button" id="btn-deck-delete" disabled><i class="bi bi-trash-fill"></i></button>
         </div>
       </header>
 
-      <div class="active-card">
-        <div class="card-face front">
-          <p class="card-label">Front</p>
-          <h3>Touch base</h3>
-          <p class="card-desc">Have a quick check-in or update.</p>
-        </div>
-        <div class="card-face back">
-          <p class="card-label">Back</p>
-          <h3>Связаться / обсудить</h3>
-          <p class="card-desc">Используйте, когда хотите уточнить прогресс или договориться о дальнейших шагах.</p>
-        </div>
-        <button class="card-toggle">Flip card</button>
-      </div>
-
-      <div class="review-actions">
-        <button class="btn ghost danger">Again</button>
-        <button class="btn ghost">Almost</button>
-        <button class="btn primary">Got it</button>
-      </div>
-
-      <div class="session-footer">
-        <p class="muted">Card 4 of 18 · Next review in 7 min</p>
-        <button class="link-btn">See schedule →</button>
+      <div class="card-panel-body">
+        <p class="word-list-empty" data-word-placeholder>Select a deck to view its cards.</p>
+        <ul class="word-card-list" data-word-list hidden></ul>
       </div>
     </div>
   </section>
 </main>
+
+<div class="deck-modal" id="deck-create-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deck-modal-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">New deck</p>
+        <h3 id="deck-modal-title">Create flashcard set</h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <form class="deck-modal-form" id="deck-create-form">
+      <label class="deck-field">
+        <span>Title</span>
+        <input type="text" name="title" placeholder="Business idioms" maxlength="50" required>
+      </label>
+      <label class="deck-field">
+        <span>Description</span>
+        <textarea name="description" rows="3" placeholder="What will learners master with this deck?" maxlength="50" required></textarea>
+      </label>
+      <label class="deck-field">
+        <span>Category</span>
+        <select name="category">
+          <option value="">Choose category</option>
+          <option value="business">Business</option>
+          <option value="travel">Travel</option>
+          <option value="daily">Daily usage</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <div class="deck-modal-actions">
+        <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+        <button class="btn primary" type="submit">Save deck</button>
+      </div>
+    </form>
+    <p class="deck-modal-hint" data-modal-hint>Decks will sync once backend wiring is in place.</p>
+  </div>
+</div>
+
+<div class="deck-modal" id="word-create-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="word-modal-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">New card</p>
+        <h3 id="word-modal-title"><span data-word-modal-title-text>Add to</span> <span data-word-modal-deck>deck</span></h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <form class="deck-modal-form" id="word-create-form">
+      <label class="deck-field">
+        <span>Word</span>
+        <input type="text" name="word" placeholder="e.g. Momentum" maxlength="50" required>
+      </label>
+      <label class="deck-field">
+        <span>Definition</span>
+        <textarea name="definition" rows="3" placeholder="Short explanation" maxlength="255" required></textarea>
+      </label>
+      <label class="deck-field">
+        <span>Example</span>
+        <textarea name="example" rows="2" placeholder="Optional usage example" maxlength="255"></textarea>
+      </label>
+      <div class="deck-modal-actions">
+        <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+        <button class="btn primary" type="submit">Save card</button>
+      </div>
+    </form>
+    <p class="deck-modal-hint" data-word-modal-hint>Add cards to keep this deck growing.</p>
+  </div>
+</div>
+
+<div class="deck-modal" id="word-delete-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="word-delete-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content confirm">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">Delete card</p>
+        <h3 id="word-delete-title" data-word-delete-title>Delete card</h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <p class="confirm-message">Are you sure you want to delete <span data-word-delete-label>this card</span>? This action cannot be undone.</p>
+    <div class="deck-modal-actions confirm-actions">
+      <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+      <button class="btn danger" type="button" id="btn-confirm-delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="deck-modal" id="deck-delete-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deck-delete-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content confirm">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">Delete deck</p>
+        <h3 id="deck-delete-title">Delete deck</h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <p class="confirm-message">
+      Are you sure you want to delete <span data-deck-delete-label>this deck</span>? All cards inside will be removed.
+    </p>
+    <div class="deck-modal-actions confirm-actions">
+      <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+      <button class="btn danger" type="button" id="btn-confirm-deck-delete">Delete deck</button>
+    </div>
+  </div>
+</div>
+
+<div class="deck-modal study-modal" id="study-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="study-modal-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">Study session</p>
+        <h3 id="study-modal-title">Review <span data-study-deck>deck</span></h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <div class="study-body">
+      <p class="study-empty" data-study-empty hidden>Add cards to this deck to start studying.</p>
+      <div class="active-card" data-study-card hidden>
+        <div class="card-face front">
+          <p class="card-label">Prompt</p>
+          <h3 data-study-word>—</h3>
+        </div>
+        <div class="card-face back">
+          <p class="card-label">Definition</p>
+          <p class="card-desc" data-study-definition>—</p>
+          <p class="card-example" data-study-example-wrap hidden>
+            <span>Example:</span>
+            <em data-study-example></em>
+          </p>
+        </div>
+        <button class="card-toggle" type="button" id="btn-study-flip">Flip card</button>
+      </div>
+      <p class="study-summary" data-study-summary hidden>Session complete.</p>
+      <div class="review-actions" data-study-actions hidden>
+        <button class="btn ghost danger" type="button" id="btn-study-unknown">Don't know</button>
+        <button class="btn primary" type="button" id="btn-study-known">I knew this</button>
+      </div>
+      <div class="session-footer">
+        <p data-study-progress>—</p>
+        <button class="link-btn" type="button" data-modal-close>End session</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from models.user import WordList
+from models.randomWordList import WordList
 
 
 class WordRepository:

@@ -3,7 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from routers import auth as auth_router, user as user_router, words as words_router, translate as translate_router, wordle_random_words as wordle_random_word_router, wordle_check as wordle_check_router
+from routers import (
+    auth as auth_router,
+    user as user_router,
+    words as words_router,
+    translate as translate_router,
+    wordle_random_words as wordle_random_word_router,
+    wordle_check as wordle_check_router,
+    flashcard as flashcard_router,
+)
 from routers.auth import security
 import uvicorn
 
@@ -36,6 +44,7 @@ app.include_router(words_router.router)
 app.include_router(translate_router.router)
 app.include_router(wordle_random_word_router.router)
 app.include_router(wordle_check_router.router)
+app.include_router(flashcard_router.router)
 
 @app.get("/", response_class=HTMLResponse, name="dashboard")
 async def dashboard(request: Request):
