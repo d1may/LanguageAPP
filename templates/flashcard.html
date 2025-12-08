@@ -24,20 +24,20 @@
         Cycle through curated decks, flip cards to reveal translations, and grade how well you remember each phrase.
       </p>
       <div class="hero-actions">
-        <button class="btn primary">Start new session</button>
-        <button class="btn ghost">Import deck</button>
+        <button class="btn primary" type="button" id="btn-start-session">Start new session</button>
+        <button class="btn ghost" type="button" id="btn-import-deck">Import deck</button>
       </div>
     </div>
     <div class="hero-stats">
       <div class="stat-card">
         <p class="stat-label">Due today</p>
-        <p class="stat-value">18 cards</p>
-        <span class="trend up">+5 since yesterday</span>
+        <p class="stat-value" data-due-cards-value>{{ due_cards or 0 }} cards</p>
+        <span class="trend up">Ready for review</span>
       </div>
       <div class="stat-card alt">
-        <p class="stat-label">Streak</p>
-        <p class="stat-value">7 days</p>
-        <span class="trend neutral">Keep it going 🔥</span>
+        <p class="stat-label">Words logged</p>
+        <p class="stat-value" data-total-cards-value>{{ total_cards or 0 }}</p>
+        <span class="trend neutral">Across all decks</span>
       </div>
     </div>
   </section>
@@ -72,18 +72,41 @@
         <div class="card-head-actions">
           <button class="btn primary" type="button" id="btn-deck-study" disabled>Study</button>
           <button class="btn secondary" type="button" id="btn-deck-add" disabled>Add</button>
-          <button class="btn tertiary" type="button" id="btn-deck-edit" disabled><i class="bi bi-pencil-square"></i></button>
-          <button class="btn destructive" type="button" id="btn-deck-delete" disabled><i class="bi bi-trash-fill"></i></button>
+          <button class="btn tertiary" type="button" id="btn-deck-edit" disabled>
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="btn destructive" type="button" id="btn-deck-delete" disabled>
+            <i class="bi bi-trash-fill"></i>
+          </button>
+          <button class="btn tertiary" type="button" id="btn-deck-export" disabled aria-label="Export deck">
+            <i class="bi bi-download"></i>
+          </button>
         </div>
       </header>
 
+      <div class="card-filter" data-card-filter hidden>
+        <input type="search" placeholder="Search cards…" data-word-search autocomplete="off">
+      </div>
+
       <div class="card-panel-body">
-        <p class="word-list-empty" data-word-placeholder>Select a deck to view its cards.</p>
+        <div class="word-list-empty" data-word-placeholder>
+          <p data-placeholder-text>Choose a deck to start reviewing cards.</p>
+          <p class="word-list-advice" data-placeholder-tip></p>
+        </div>
         <ul class="word-card-list" data-word-list hidden></ul>
       </div>
     </div>
   </section>
 </main>
+
+<div class="session-empty-modal" id="session-empty-modal" aria-hidden="true">
+  <div class="session-empty-backdrop" data-session-empty-close></div>
+  <div class="session-empty-card">
+    <h3>No cards ready</h3>
+    <p>Add more cards and boost that vocabulary! 🚀</p>
+    <button class="btn primary" type="button" data-session-empty-close>Got it</button>
+  </div>
+</div>
 
 <div class="deck-modal" id="deck-create-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deck-modal-title">
   <div class="deck-modal-backdrop" data-modal-close></div>
@@ -98,11 +121,11 @@
     <form class="deck-modal-form" id="deck-create-form">
       <label class="deck-field">
         <span>Title</span>
-        <input type="text" name="title" placeholder="Business idioms" maxlength="50" required>
+        <input type="text" name="title" placeholder="Business idioms" maxlength="40" required>
       </label>
       <label class="deck-field">
         <span>Description</span>
-        <textarea name="description" rows="3" placeholder="What will learners master with this deck?" maxlength="50" required></textarea>
+        <textarea name="description" rows="3" placeholder="What will learners master with this deck?" maxlength="40" required></textarea>
       </label>
       <label class="deck-field">
         <span>Category</span>
@@ -114,12 +137,68 @@
           <option value="custom">Custom</option>
         </select>
       </label>
+      <label class="deck-field">
+        <span>Language</span>
+        <select name="lang" required>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </label>
       <div class="deck-modal-actions">
         <button class="btn ghost" type="button" data-modal-close>Cancel</button>
         <button class="btn primary" type="submit">Save deck</button>
       </div>
     </form>
     <p class="deck-modal-hint" data-modal-hint>Decks will sync once backend wiring is in place.</p>
+  </div>
+</div>
+
+<div class="deck-modal" id="deck-import-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deck-import-title">
+  <div class="deck-modal-backdrop" data-modal-close></div>
+  <div class="deck-modal-content">
+    <header class="deck-modal-head">
+      <div>
+        <p class="panel-label">Import deck</p>
+        <h3 id="deck-import-title">Upload CSV</h3>
+      </div>
+      <button class="icon-btn small ghost" type="button" data-modal-close>Close</button>
+    </header>
+    <form class="deck-modal-form" id="deck-import-form" enctype="multipart/form-data">
+      <label class="deck-field">
+        <span>Title</span>
+        <input type="text" name="title" placeholder="My study set" maxlength="40" required>
+      </label>
+      <label class="deck-field">
+        <span>Description</span>
+        <textarea name="description" rows="3" placeholder="Short summary" maxlength="45" required></textarea>
+      </label>
+      <label class="deck-field">
+        <span>Category</span>
+        <select name="category">
+          <option value="">Choose category</option>
+          <option value="business">Business</option>
+          <option value="travel">Travel</option>
+          <option value="daily">Daily usage</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <label class="deck-field">
+        <span>Language</span>
+        <select name="lang" required>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </label>
+      <label class="deck-field">
+        <span>CSV file</span>
+        <input type="file" name="file" accept=".csv,text/csv" required>
+      </label>
+      <div class="deck-modal-actions">
+        <button class="btn ghost" type="button" data-modal-close>Cancel</button>
+        <button class="btn primary" type="submit">Import deck</button>
+      </div>
+    </form>
+    <p class="deck-modal-hint" data-import-hint>CSV must include Word & Definition columns; Example and Difficulty are optional.</p>
   </div>
 </div>
 
@@ -140,11 +219,11 @@
       </label>
       <label class="deck-field">
         <span>Definition</span>
-        <textarea name="definition" rows="3" placeholder="Short explanation" maxlength="255" required></textarea>
+        <textarea name="definition" rows="3" placeholder="Short explanation" maxlength="100" required></textarea>
       </label>
       <label class="deck-field">
         <span>Example</span>
-        <textarea name="example" rows="2" placeholder="Optional usage example" maxlength="255"></textarea>
+        <textarea name="example" rows="2" placeholder="Optional usage example" maxlength="100"></textarea>
       </label>
       <div class="deck-modal-actions">
         <button class="btn ghost" type="button" data-modal-close>Cancel</button>

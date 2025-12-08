@@ -1,3 +1,7 @@
+body.random{
+  background:radial-gradient(circle at top,#2b1107,#130702 60%,#050201 95%);
+}
+
 .random-shell{
   max-width:960px;
   margin:0 auto;
@@ -37,6 +41,12 @@
   flex-wrap:wrap;
   align-items:flex-end;
 }
+.session-congrats{
+  margin-top:12px;
+  font-size:16px;
+  font-weight:600;
+  color:#f8d08c;
+}
 
 .meta-chip{
   padding:12px 16px;
@@ -44,6 +54,11 @@
   border:1px solid rgba(246,165,72,.18);
   background:rgba(35,17,7,.8);
   min-width:150px;
+}
+.meta-chip.session-complete{
+  background:linear-gradient(135deg,rgba(255,205,150,.25),rgba(85,40,12,.92));
+  border-color:rgba(255,205,150,.6);
+  box-shadow:0 10px 30px rgba(237,170,98,.35);
 }
 
 .meta-title{
@@ -333,6 +348,21 @@
   gap:18px;
   align-items:flex-start;
   flex-wrap:wrap;
+}
+.library-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.btn.library-save{
+  background:#f7b13a;
+  color:#2b0b01;
+  border:1px solid rgba(255,226,170,.65);
+  box-shadow:none;
+}
+.btn.library-save:hover{
+  background:#ffc566;
 }
 
 .muted-small{

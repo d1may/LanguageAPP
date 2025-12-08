@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from models.flashcard import FlashcardDecks
+from models.flashcardWordList import FlashcardWordList
 
 
 class DeckRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def save_deck(self, *, user_id: int, title: str, description: str, category: str | None) -> FlashcardDecks:
+    def save_deck(self, *, user_id: int, title: str, description: str, category: str | None, lang: str) -> FlashcardDecks:
         stmt = select(FlashcardDecks).where(
             FlashcardDecks.user_id == user_id,
             FlashcardDecks.title == title,
@@ -25,8 +26,10 @@ class DeckRepository:
                 title=title,
                 description=description,
                 category=category,
+                lang=lang
             )
             self.db.add(entity)
+        entity.lang = lang
 
         self.db.commit()
         self.db.refresh(entity)
@@ -47,10 +50,19 @@ class DeckRepository:
         )
         return self.db.execute(stmt).scalar_one_or_none()
 
+    def get_deck_by_lang(self, user_id: int, lang: str) -> list[FlashcardDecks]:
+        stmt = (
+            select(FlashcardDecks)
+            .where(FlashcardDecks.user_id == user_id, FlashcardDecks.lang == lang)
+            .order_by(FlashcardDecks.id.desc())
+        )
+        return list(self.db.execute(stmt).scalars())
+
     def delete_deck(self, *, deck_id: int, user_id: int) -> bool:
         deck = self.get_deck(deck_id, user_id)
         if deck is None:
             return False
+        self.db.execute(delete(FlashcardWordList).where(FlashcardWordList.deck_id == deck_id))
         self.db.delete(deck)
         self.db.commit()
         return True
@@ -63,6 +75,7 @@ class DeckRepository:
         title: str,
         description: str,
         category: str | None,
+        lang: str,
     ) -> FlashcardDecks | None:
         deck = self.get_deck(deck_id, user_id)
         if deck is None:
@@ -79,6 +92,7 @@ class DeckRepository:
         deck.title = title
         deck.description = description
         deck.category = category
+        deck.lang = lang
         self.db.commit()
         self.db.refresh(deck)
         return deck

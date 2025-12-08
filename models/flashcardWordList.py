@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, DateTime
+from datetime import datetime
 
 from core.database import Base
 
@@ -12,3 +13,5 @@ class FlashcardWordList(Base):
     word = Column(String(50), nullable=False, index=True)
     definition = Column(String(255), nullable=False, index=True)
     example = Column(String(255), nullable=True, index=True)
+    difficulty = Column(String(50), nullable=True, index=True)
+    last_review = Column(DateTime, default=datetime.utcnow, nullable=True)

@@ -33,10 +33,46 @@ const KEYBOARD_LAYOUTS = {
   ],
 };
 
+function updateStatsUI(stats = {}) {
+  const { played = 0, wins = 0, losses = 0, win_streak: winStreak = 0 } = stats;
+  const applyValue = (selector, value) => {
+    const el = qs(selector);
+    if (!el) return;
+    const numericValue = Number(value);
+    const safeValue = Number.isNaN(numericValue) ? 0 : Math.max(0, Math.trunc(numericValue));
+    el.textContent = String(safeValue);
+  };
+
+  applyValue("#wordle-played-count", played);
+  applyValue("#wordle-win-count", (wins/played)*100);
+  applyValue("#wordle-loss-count", losses);
+  applyValue("#wordle-streak-count", winStreak);
+}
+
+async function loadWordleStats() {
+  try {
+    const stats = await api(PATHS.wordleStats, "GET");
+    updateStatsUI(stats);
+  } catch (err) {
+    console.error("Failed to load Wordle stats:", err.message);
+  }
+}
+
+async function recordGameResult(result) {
+  if (result !== "win" && result !== "loss") return;
+  try {
+    const stats = await api(PATHS.wordleStatsResult, "POST", { result });
+    updateStatsUI(stats);
+  } catch (err) {
+    console.error("Failed to update Wordle stats:", err.message);
+  }
+}
+
 async function bootstrap() {
   try {
     await api(PATHS.me);
     await loadSettings();
+    await loadWordleStats();
   } catch (err) {
     console.warn("Auth check failed:", err.message);
     window.location = "/auth";
@@ -297,6 +333,7 @@ function setupGameControls() {
         isGameActive = false;
         awaitingRestart = true;
         updateSendButtonLabel();
+        await recordGameResult("win");
         return;
       }
       advanceAttempt();
@@ -304,6 +341,7 @@ function setupGameControls() {
         showAlert(`No attempts left. The word was: ${secretWord}.`);
         awaitingRestart = true;
         updateSendButtonLabel();
+        await recordGameResult("loss");
         return;
       }
       showAlert(response.message || "Keep trying.");

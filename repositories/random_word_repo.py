@@ -16,10 +16,39 @@ class WordRepository:
 
         if existing:
             existing.status = status
+            if translate is not None:
+                existing.translate = translate
+            if comment is not None:
+                existing.comment = comment
+            if lang:
+                existing.lang = lang
             entity = existing
         else:
             entity = WordList(user_id=user_id, word=word, status=status, translate=translate, comment=comment, lang=lang)
             self.db.add(entity)
+
+        self.db.commit()
+        self.db.refresh(entity)
+        return entity
+
+    def update_user_word(
+        self,
+        *,
+        user_id: int,
+        word_id: int,
+        updates: dict[str, str | None],
+    ) -> WordList | None:
+        stmt = select(WordList).where(
+            WordList.user_id == user_id,
+            WordList.id == word_id,
+        )
+        entity = self.db.execute(stmt).scalar_one_or_none()
+        if not entity:
+            return None
+
+        for field in ("translate", "comment"):
+            if field in updates:
+                setattr(entity, field, updates[field])
 
         self.db.commit()
         self.db.refresh(entity)

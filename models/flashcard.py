@@ -13,4 +13,5 @@ class FlashcardDecks(Base):
     title = Column(String(50), nullable=False, index=True)
     description = Column(String(50), nullable=False, index=True)
     category = Column(String(50), nullable=True, index=True)
+    lang = Column(String(10), nullable=False, index=True)
  

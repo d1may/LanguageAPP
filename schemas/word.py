@@ -25,6 +25,11 @@ class WordListOut(BaseModel):
     word_lang: Literal["en", "de"]
 
 
+class WordLibraryUpdateIn(BaseModel):
+    translate: constr(strip_whitespace=True, max_length=50) | None = None
+    comment: constr(strip_whitespace=True, max_length=75) | None = None
+
+
 class WordLibraryBuckets(BaseModel):
     high: list[WordListOut]
     medium: list[WordListOut]

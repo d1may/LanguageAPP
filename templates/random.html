@@ -17,21 +17,22 @@
 {% block content %}
 <main class="random-shell">
   <section class="random-hero">
-    <div>
-      <p class="section-label">Daily discovery</p>
-      <h2>Random Word Lab</h2>
-      <p class="muted">Jump into a curated stream of English or German vocabulary and build context with one tap.</p>
-    </div>
-    <div class="hero-meta">
-      <div class="meta-chip">
-        <span class="meta-title">Current deck</span>
-        <span id="word-lang" class="meta-value">English</span>
+      <div>
+        <p class="section-label">Daily discovery</p>
+        <h2>Random Word Lab</h2>
+        <p class="muted">Jump into a curated stream of English or German vocabulary and build context with one tap.</p>
+        <p class="session-congrats" id="session-congrats" hidden></p>
       </div>
-      <div class="meta-chip">
-        <span class="meta-title">Session words</span>
-        <span class="meta-value">0/10</span>
+      <div class="hero-meta">
+        <div class="meta-chip">
+          <span class="meta-title">Current deck</span>
+          <span id="word-lang" class="meta-value">English</span>
+        </div>
+        <div class="meta-chip" id="session-chip">
+          <span class="meta-title">Session words</span>
+          <span class="meta-value" id="session-words">0/10</span>
+        </div>
       </div>
-    </div>
   </section>
 
   <section class="random-grid">
@@ -83,9 +84,14 @@
           plus 10 words per rating bucket. Data comes directly from your deck.
         </p>
       </div>
-      <button type="button" id="btn-refresh-library" class="btn ghost">
-        Refresh data
-      </button>
+      <div class="library-actions">
+        <button type="button" id="btn-refresh-library" class="btn ghost">
+          Refresh data
+        </button>
+        <button type="button" id="btn-save-library" class="btn library-save">
+          Save data
+        </button>
+      </div>
     </div>
 
     <div class="library-controls">
@@ -111,7 +117,7 @@
         <thead>
           <tr>
             <th>Word</th>
-            <th>Translation</th>
+            <th>Definition</th>
             <th>Comment</th>
             <th>Rating</th>
           </tr>

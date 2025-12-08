@@ -24,6 +24,7 @@ dependencies = [
     "authx>=1.4.3",
     "httpx",
     "jinja2>=3.1.6",
+    "datetime>=6.0",
 ]
 
 [tool.setuptools.packages.find]

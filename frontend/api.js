@@ -7,15 +7,24 @@ export const PATHS = {
   me: "/user/me",
   randomWord: "/words/random/",
   wordLibrary: "/words/library",
+  wordLibraryEntry: (wordId) => `/words/library/${wordId}`,
+  randomSessionWords: "/words/random_session_words",
   settings: "/user/settings",
   logout: "/user/logout",
   wordleCheck: "/wordle/check",
+  wordleStats: "/wordle/stats",
+  wordleStatsResult: "/wordle/stats/result",
   wordleRandom: "/wordle_random_word",
   wordRating: "/words/rate",
   flashcardDecks: "/flashcard/decks",
   flashcardDeck: (deckId) => `/flashcard/decks/${deckId}`,
   flashcardDeckWords: (deckId) => `/flashcard/decks/${deckId}/words`,
   flashcardDeckWord: (deckId, wordId) => `/flashcard/decks/${deckId}/words/${wordId}`,
+  flashcardWordDifficulty: (deckId, wordId) => `/flashcard/decks/${deckId}/words/${wordId}/difficulty`,
+  flashcardSession: "/flashcard/session",
+  flashcardDeckExport: (deckId) => `/flashcard/export/flashcard_csv?deck_id=${encodeURIComponent(deckId)}`,
+  flashcardImport: "/flashcard/import",
+  flashcardStats: "/flashcard/stats",
 };
 
 export const qs = (s) => document.querySelector(s);
@@ -93,9 +102,10 @@ function getCsrfHeader(method, useRefresh = false) {
 
 /* ===================== MAIN API WRAPPER ===================== */
 
-export async function api(path, method = "GET", body = null, options = {}) {
+async function authorizedRequest(path, method = "GET", body = null, options = {}) {
   const headers = {};
-  if (body) headers["Content-Type"] = "application/json";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body && !isFormData) headers["Content-Type"] = "application/json";
   const { useRefreshCsrf = false } = options;
 
   async function doRequest() {
@@ -104,7 +114,7 @@ export async function api(path, method = "GET", body = null, options = {}) {
     return fetch(API_BASE + path, {
       method,
       headers: { ...headers, ...csrfHeaders },
-      body: body ? JSON.stringify(body) : null,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : null,
       credentials: "include",
     });
   }
@@ -119,6 +129,11 @@ export async function api(path, method = "GET", body = null, options = {}) {
     }
   }
 
+  return res;
+}
+
+export async function api(path, method = "GET", body = null, options = {}) {
+  const res = await authorizedRequest(path, method, body, options);
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
@@ -128,4 +143,17 @@ export async function api(path, method = "GET", body = null, options = {}) {
   }
 
   return data;
+}
+
+export async function apiFetch(path, method = "GET", body = null, options = {}) {
+  const res = await authorizedRequest(path, method, body, options);
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const msg = extractErrorMessage(data, res);
+    console.error("API error:", msg, "raw:", data);
+    throw new Error(msg);
+  }
+
+  return res;
 }

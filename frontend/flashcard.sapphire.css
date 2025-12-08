@@ -99,7 +99,21 @@ body.flashcard{
   border:1px solid #ffffff0f;
   border-radius:22px;
   padding:24px;
+  height: 55vh;
   box-shadow:0 25px 60px rgba(0,0,0,.38);
+}
+
+.deck-panel{
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 160px);
+  min-height:0;
+  align-self:start;
+}
+
+.card-panel{
+  display:flex;
+  flex-direction:column;
 }
 
 .panel-head{
@@ -124,6 +138,10 @@ body.flashcard{
 
 .panel-head h2{
   margin:4px 0 0;
+  max-width:420px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .deck-filter input{
@@ -138,10 +156,13 @@ body.flashcard{
 
 .deck-list{
   list-style:none;
-  padding:0;
-  margin:20px 0 0;
+  padding:8px 0 12px;
+  margin:12px 0 0;
   display:grid;
   gap:12px;
+  overflow-y:auto;
+  flex:1;
+  min-height:0;
 }
 
 .deck-empty{
@@ -157,11 +178,19 @@ body.flashcard{
   border:1px solid transparent;
   background:#0b152a;
   display:flex;
+  flex-direction:row;
   justify-content:space-between;
   gap:12px;
   align-items:center;
   cursor:pointer;
   transition:border-color .2s,transform .2s;
+}
+
+.deck-info{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-width:0;
 }
 
 .deck-item.active{
@@ -173,6 +202,8 @@ body.flashcard{
 .deck-title{
   margin:0;
   font-weight:600;
+  overflow-wrap:anywhere;
+  line-height:1.2;
 }
 
 .deck-meta{
@@ -186,7 +217,16 @@ body.flashcard{
   color:var(--accent);
   border:1px solid #22d3ee55;
   border-radius:999px;
-  padding:4px 10px;
+  padding:4px 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  flex-wrap:wrap;
+  text-align:center;
+  line-height:1.2;
+  max-width:150px;
+  word-break:break-word;
 }
 
 .card-panel{
@@ -195,11 +235,25 @@ body.flashcard{
   gap:24px;
 }
 
+.card-filter{
+  margin:0 0 8px;
+}
+
+.card-filter input{
+  width:100%;
+  border-radius:14px;
+  border:1px solid #ffffff1c;
+  background:#0a1324;
+  color:var(--text);
+  padding:10px 14px;
+  font-size:14px;
+}
+
 .card-head-actions{
   display:flex;
   gap:12px;
-  flex-wrap:wrap;
   justify-content:flex-end;
+  flex-wrap:wrap;
 }
 
 .chip-list{
@@ -242,6 +296,18 @@ body.flashcard{
   border:1px dashed #ffffff2b;
   border-radius:18px;
   color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.word-list-empty p{
+  margin:0;
+}
+
+.word-list-advice{
+  font-size:13px;
+  color:#38bdf8;
 }
 
 .word-card-list{
@@ -274,6 +340,44 @@ body.flashcard{
   display:flex;
   align-items:center;
   gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.word-card-rating{
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(56,189,248,.45);
+  background:rgba(56,189,248,.12);
+  color:#d1f5ff;
+}
+
+.word-card-rating.easy{
+  border-color:#4ade80;
+  background:rgba(74,222,128,.16);
+  color:#dcfce7;
+}
+
+.word-card-rating.medium{
+  border-color:#fbbf24;
+  background:rgba(251,191,36,.14);
+  color:#fff4d5;
+}
+
+.word-card-rating.hard{
+  border-color:#f87171;
+  background:rgba(248,113,113,.15);
+  color:#ffe0e0;
+}
+
+.word-card-rating.unrated{
+  border-color:rgba(56,189,248,.45);
+  background:rgba(56,189,248,.07);
+  color:#d6f5ff;
 }
 
 .word-card-title{
@@ -353,6 +457,54 @@ body.flashcard{
 }
 .card-panel-body::-webkit-scrollbar-track{
   background:transparent;
+}
+
+.session-empty-modal{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(4,7,16,.75);
+  backdrop-filter:blur(2px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+  z-index:80;
+}
+
+.session-empty-modal.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.session-empty-card{
+  background:rgba(8,14,28,.96);
+  border:1px solid rgba(56,189,248,.35);
+  border-radius:22px;
+  padding:28px;
+  max-width:320px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.55);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.session-empty-card h3{
+  margin:0;
+  font-size:20px;
+}
+
+.session-empty-card p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+.session-empty-card .btn{
+  align-self:center;
+  min-width:120px;
 }
 
 .study-body{
@@ -653,6 +805,20 @@ body.flashcard{
   resize:none;
 }
 
+.deck-field input[type="file"]{
+  cursor:pointer;
+}
+
+.deck-field input[type="file"]::file-selector-button{
+  border:1px solid #38bdf87d;
+  background:rgba(56,189,248,.15);
+  color:var(--text);
+  padding:6px 12px;
+  border-radius:10px;
+  margin-right:14px;
+  cursor:pointer;
+}
+
 .deck-modal-actions{
   display:flex;
   justify-content:flex-end;
@@ -705,4 +871,9 @@ body.flashcard{
     flex-direction:column;
     align-items:flex-start;
   }
+}
+.session-empty-modal .btn.primary{
+  background:linear-gradient(135deg,#22d3ee,#0ea5e9);
+  color:#0b1326;
+  border:0;
 }

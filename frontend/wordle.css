@@ -121,7 +121,7 @@
 
 .score-item{
   text-align:center;
-  padding:8px 14px;
+  padding:10px 14px;
   border-radius:12px;
   border:1px solid rgba(255,198,124,.12);
   background:#241006;
@@ -135,8 +135,8 @@
   display:block;
 }
 
-.score-item strong{
-  font-size:22px;
+.score-item strong, .score-procent{
+  font-size:20px;
 }
 
 .wordle-board{

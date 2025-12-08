@@ -1,10 +1,12 @@
-import { api, qs, show, PATHS } from "./api.js";
+import { api, apiFetch, qs, show, PATHS } from "./api.js";
 import { applyTheme, getActiveTheme } from "./theme.js";
 
 let currentLang = "en";
 let currentTheme = getActiveTheme();
 let themeInputs = [];
 let langInputs = [];
+let sessionWords = 0;
+const SESSION_WORD_LIMIT = 10;
 
 const STATUS_TO_RATING = {
   easy: "high",
@@ -27,6 +29,28 @@ function updateLangBadge() {
   badge.textContent = currentLang === "de" ? "German" : "English";
 }
 
+function updateSessionBadge() {
+  const badge = qs("#session-words");
+  const chip = qs("#session-chip");
+  const congrats = qs("#session-congrats");
+  if (!badge) return;
+  const normalized = Number.isFinite(sessionWords) ? sessionWords : 0;
+  const capped = Math.min(Math.max(normalized, 0), SESSION_WORD_LIMIT);
+  badge.textContent = `${capped}/${SESSION_WORD_LIMIT}`;
+  const isComplete = capped >= SESSION_WORD_LIMIT;
+  if (chip) {
+    chip.classList.toggle("session-complete", isComplete);
+  }
+  if (congrats) {
+    if (isComplete) {
+      congrats.textContent = "Session complete! Awesome streak 🚀";
+      congrats.hidden = false;
+    } else {
+      congrats.hidden = true;
+    }
+  }
+}
+
 function updateThemeRadios() {
   if (!themeInputs.length) {
     themeInputs = Array.from(document.querySelectorAll('input[name="app-theme"]'));
@@ -41,6 +65,33 @@ const BADGE_META = {
   medium: { label: "MEDIUM", className: "medium" },
   low: { label: "LOW", className: "low" },
 };
+
+const CARD_DIFFICULTY_META = {
+  easy: { label: "Confident", className: "easy" },
+  medium: { label: "Learning", className: "medium" },
+  hard: { label: "Needs review", className: "hard" },
+  unrated: { label: "New", className: "unrated" },
+};
+
+async function refreshFlashcardStats() {
+  const dueEl = qs("[data-due-cards-value]");
+  const totalEl = qs("[data-total-cards-value]");
+  if (!dueEl && !totalEl) return;
+  try {
+    const data = await api(PATHS.flashcardStats, "GET");
+    if (dueEl) {
+      const due = Number(data?.due_cards);
+      const normalized = Number.isFinite(due) && due >= 0 ? due : 0;
+      dueEl.textContent = `${normalized} cards`;
+    }
+    if (totalEl) {
+      const total = Number(data?.total_cards);
+      totalEl.textContent = Number.isFinite(total) && total >= 0 ? total : 0;
+    }
+  } catch (err) {
+    console.error("Failed to refresh flashcard stats:", err);
+  }
+}
 
 const LIBRARY_FILTERS = {
   recent: {
@@ -73,7 +124,9 @@ function escapeHtml(str = "") {
 
 function normalizeWordEntity(item = {}, ratingOverride) {
   const rating = ratingOverride || STATUS_TO_RATING[item.status] || "medium";
+  const numericId = Number(item.id);
   return {
+    id: Number.isFinite(numericId) ? numericId : null,
     word: item.word || "—",
     translation: item.translate || item.translation || "",
     comment: item.comment || item.note || "",
@@ -109,14 +162,16 @@ function createEditableField({
   placeholder = "",
   field,
   word = "",
+  wordId = null,
   maxLength,
 }) {
   const safeValue = value ? escapeHtml(value) : "";
   const safePlaceholder = escapeHtml(placeholder);
   const safeWord = escapeHtml(word);
   const maxAttr = Number.isFinite(maxLength) ? `data-maxlength="${maxLength}"` : "";
+  const idAttr = Number.isFinite(wordId) ? `data-word-id="${wordId}"` : "";
 
-  return `<div class="word-input" contenteditable="true" data-field="${field}" ${maxAttr} data-word="${safeWord}" data-placeholder="${safePlaceholder}">${safeValue}</div>`;
+  return `<div class="word-input" contenteditable="true" data-field="${field}" ${maxAttr} ${idAttr} data-word="${safeWord}" data-placeholder="${safePlaceholder}">${safeValue}</div>`;
 }
 
 function renderWordRow(item) {
@@ -127,9 +182,10 @@ function renderWordRow(item) {
     : "—";
   const translationField = createEditableField({
     value: item.translation || "",
-    placeholder: "Add translation",
+    placeholder: "Add definition",
     field: "translation",
     word: item.word || "",
+    wordId: item.id,
     maxLength: 50,
   });
   const commentField = createEditableField({
@@ -137,6 +193,7 @@ function renderWordRow(item) {
     placeholder: "Add comment",
     field: "comment",
     word: item.word || "",
+    wordId: item.id,
     maxLength: 75,
   });
 
@@ -169,14 +226,19 @@ function renderFlashcardWordCard(item = {}) {
   const word = escapeHtml(item.word || "—");
   const definition = escapeHtml(item.definition || "No definition yet.");
   const example = item.example ? `<p class="word-card-example">${escapeHtml(item.example)}</p>` : "";
+  const difficultyKey = String(item.difficulty || "").toLowerCase();
+  const difficultyMeta = CARD_DIFFICULTY_META[difficultyKey] || CARD_DIFFICULTY_META.unrated;
+  const difficultyBadge = `<span class="word-card-rating ${difficultyMeta.className}">${difficultyMeta.label}</span>`;
+  const difficultyAttr = escapeHtml(item.difficulty || "");
   return `
-    <li class="word-card" data-word-id="${item.id}" data-deck-id="${item.deck_id}">
+    <li class="word-card" data-word-id="${item.id}" data-deck-id="${item.deck_id}" data-difficulty="${difficultyAttr}">
       <div class="word-card-head">
         <div>
           <h3 class="word-card-title">${word}</h3>
           <p class="word-card-definition">${definition}</p>
         </div>
         <div class="word-card-actions">
+          ${difficultyBadge}
           <button class="icon-btn ghost word-card-action-btn word-card-edit" type="button" title="Edit card" aria-label="Edit card">
             <i class="bi bi-pencil-square" aria-hidden="true"></i>
           </button>
@@ -213,8 +275,83 @@ function initWordLibrary() {
   if (!tableBody || !menu) return;
 
   const refreshBtn = qs("#btn-refresh-library");
+  const saveBtn = qs("#btn-save-library");
   let currentSnapshot = DEFAULT_SNAPSHOT;
   let activeFilter = "recent";
+  const notifyLibraryMessage = (message, status = "err") => {
+    if (!message) return;
+    const msg = qs("#app-msg");
+    if (!msg) return;
+    msg.textContent = message;
+    msg.className = status === "ok" ? "msg ok" : "msg err";
+    show(msg, true);
+  };
+  const notifyLibraryError = (message) => notifyLibraryMessage(message, "err");
+  const notifyLibrarySuccess = (message) => notifyLibraryMessage(message, "ok");
+  const syncEditableState = () => {
+    tableBody.querySelectorAll(".word-input").forEach((el) => {
+      el.dataset.savedValue = (el.textContent || "").trim();
+    });
+  };
+
+  const persistEditableField = async (element) => {
+    if (!element) return false;
+    const wordId = Number(element.dataset.wordId);
+    if (!Number.isFinite(wordId)) return false;
+    const field = element.dataset.field;
+    const value = (element.textContent || "").trim();
+    const payload = {};
+
+    if (field === "translation") {
+      payload.translate = value || null;
+    } else if (field === "comment") {
+      payload.comment = value || null;
+    } else {
+      return;
+    }
+
+    element.dataset.saving = "true";
+    try {
+      await api(PATHS.wordLibraryEntry(wordId), "PUT", payload);
+      element.dataset.savedValue = value;
+      const snapshotField = field === "translation" ? "translation" : "comment";
+      updateSnapshotField(wordId, snapshotField, value);
+      return true;
+    } catch (err) {
+      console.error("Failed to save word field:", err);
+      const revertValue = element.dataset.savedValue || "";
+      element.textContent = revertValue;
+      notifyLibraryError(err.message || "Failed to save changes");
+      return false;
+    } finally {
+      delete element.dataset.saving;
+    }
+  };
+  const collectDirtyFields = () =>
+    Array.from(tableBody.querySelectorAll(".word-input")).filter((el) => {
+      const savedValue = el.dataset.savedValue || "";
+      const currentValue = (el.textContent || "").trim();
+      return currentValue !== savedValue;
+    });
+  const getSnapshotLists = () => {
+    const buckets = currentSnapshot?.buckets || {};
+    return [
+      currentSnapshot?.recent,
+      buckets.high,
+      buckets.medium,
+      buckets.low,
+    ].filter((list) => Array.isArray(list));
+  };
+  const updateSnapshotField = (wordId, fieldKey, value) => {
+    if (!Number.isFinite(wordId) || !fieldKey) return;
+    getSnapshotLists().forEach((list) => {
+      list.forEach((entry) => {
+        if (entry.id === wordId) {
+          entry[fieldKey] = value;
+        }
+      });
+    });
+  };
 
   const applyFilter = (filterKey = "recent") => {
     const config = LIBRARY_FILTERS[filterKey] || LIBRARY_FILTERS.recent;
@@ -226,6 +363,7 @@ function initWordLibrary() {
 
     const items = config.getItems(currentSnapshot);
     renderWordTable(tableBody, items, config.fallback);
+    syncEditableState();
   };
 
   menu.addEventListener("click", (e) => {
@@ -259,6 +397,33 @@ function initWordLibrary() {
     });
   }
 
+  if (saveBtn) {
+    const defaultSaveLabel = saveBtn.textContent || "Save data";
+    saveBtn.addEventListener("click", async () => {
+      const dirtyFields = collectDirtyFields();
+      if (!dirtyFields.length) {
+        notifyLibrarySuccess("Nothing to save");
+        return;
+      }
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving…";
+      try {
+        let successCount = 0;
+        for (const field of dirtyFields) {
+          // eslint-disable-next-line no-await-in-loop
+          const saved = await persistEditableField(field);
+          if (saved) successCount += 1;
+        }
+        if (successCount) {
+          notifyLibrarySuccess(`Saved ${successCount} change${successCount === 1 ? "" : "s"}`);
+        }
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = defaultSaveLabel;
+      }
+    });
+  }
+
   loadSnapshot(true);
 
   tableBody.addEventListener("input", (e) => {
@@ -267,6 +432,24 @@ function initWordLibrary() {
     const max = parseInt(target.dataset.maxlength || "", 10);
     if (!max) return;
     enforceEditableLimit(target, max);
+  });
+
+  tableBody.addEventListener("keydown", (e) => {
+    const target = e.target.closest(".word-input");
+    if (!target) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      target.blur();
+    }
+  });
+
+  tableBody.addEventListener("focusout", (e) => {
+    const target = e.target.closest(".word-input");
+    if (!target) return;
+    const savedValue = target.dataset.savedValue || "";
+    const currentValue = (target.textContent || "").trim();
+    if (currentValue === savedValue) return;
+    persistEditableField(target);
   });
 
   return {
@@ -750,10 +933,11 @@ function initDeckDeleteModal(options = {}) {
   };
 }
 
-function initStudyModal() {
+function initStudyModal(options = {}) {
   const modal = qs("#study-modal");
   if (!modal) return null;
 
+  const { onDifficultySaved, onSessionComplete } = options || {};
   const cardEl = modal.querySelector("[data-study-card]");
   const wordEl = modal.querySelector("[data-study-word]");
   const definitionEl = modal.querySelector("[data-study-definition]");
@@ -768,13 +952,19 @@ function initStudyModal() {
   const actionsEl = modal.querySelector("[data-study-actions]");
   const deckLabelEl = modal.querySelector("[data-study-deck]");
   const defaultFlipText = flipBtn ? flipBtn.textContent : "Flip card";
+  const RESULT_TO_DIFFICULTY = {
+    known: "easy",
+    unknown: "hard",
+  };
 
   let deckTitle = "";
+  let deckId = null;
   let cards = [];
   let index = 0;
   let flipped = false;
   let stats = { known: 0, unknown: 0 };
   let animating = false;
+  let sessionFinished = false;
 
   const handleEsc = (event) => {
     if (event.key !== "Escape") return;
@@ -789,6 +979,18 @@ function initStudyModal() {
     }
     if (flipBtn) {
       flipBtn.textContent = flipped ? "Show word" : defaultFlipText || "Flip card";
+    }
+  };
+
+  const maybeNotifyCompletion = () => {
+    if (sessionFinished) return;
+    sessionFinished = true;
+    if (typeof onSessionComplete === "function") {
+      try {
+        onSessionComplete({ deckId, stats: { ...stats } });
+      } catch (err) {
+        console.error("onSessionComplete handler failed:", err);
+      }
     }
   };
 
@@ -822,6 +1024,7 @@ function initStudyModal() {
 
     if (summaryEl) summaryEl.hidden = !finished;
     if (finished) {
+      maybeNotifyCompletion();
       if (cardEl) cardEl.hidden = true;
       if (actionsEl) actionsEl.hidden = true;
       if (flipBtn) flipBtn.hidden = true;
@@ -859,6 +1062,8 @@ function initStudyModal() {
     index = 0;
     stats = { known: 0, unknown: 0 };
     animating = false;
+    deckId = null;
+    sessionFinished = false;
     setFlipped(false);
   };
 
@@ -880,9 +1085,36 @@ function initStudyModal() {
     setFlipped(!flipped);
   });
 
+  const persistDifficulty = async (card, difficulty) => {
+    if (!card || !difficulty) return;
+    const targetDeckId = Number(card.deck_id ?? deckId);
+    const wordId = Number(card.id);
+    if (!Number.isFinite(targetDeckId) || !Number.isFinite(wordId)) return;
+    try {
+      const updated = await api(
+        PATHS.flashcardWordDifficulty(targetDeckId, wordId),
+        "PATCH",
+        { difficulty }
+      );
+      if (typeof onDifficultySaved === "function") {
+        onDifficultySaved(updated);
+      }
+    } catch (err) {
+      console.error("Failed to save difficulty:", err);
+    }
+  };
+
   const handleResult = (type) => {
     if (!cards.length || index >= cards.length || animating) return;
-    stats[type] += 1;
+    if (typeof stats[type] === "number") {
+      stats[type] += 1;
+    }
+    const currentCard = cards[index];
+    const difficultyValue = RESULT_TO_DIFFICULTY[type];
+    if (currentCard && difficultyValue) {
+      currentCard.difficulty = difficultyValue;
+      void persistDifficulty(currentCard, difficultyValue);
+    }
     if (!cardEl) {
       index += 1;
       renderState();
@@ -908,10 +1140,13 @@ function initStudyModal() {
   return {
     startSession({ deck, cards: deckCards } = {}) {
       deckTitle = deck?.title || "deck";
+      const deckIdentifier = Number(deck?.id);
+      deckId = Number.isFinite(deckIdentifier) ? deckIdentifier : null;
       cards = Array.isArray(deckCards) ? [...deckCards] : [];
       index = 0;
       stats = { known: 0, unknown: 0 };
       animating = false;
+      sessionFinished = false;
       setFlipped(false);
       renderState();
       openModal();
@@ -930,11 +1165,25 @@ function initFlashcardWorkspace(options = {}) {
   const statsWrap = qs("[data-word-stats]");
   const countEl = qs("[data-word-count]");
   const placeholderEl = qs("[data-word-placeholder]");
+  const placeholderTextEl = placeholderEl?.querySelector("[data-placeholder-text]");
+  const placeholderTipEl = placeholderEl?.querySelector("[data-placeholder-tip]");
+  const wordSearchInput = qs("[data-word-search]");
+  const wordSearchWrap = qs("[data-card-filter]");
+  const DEFAULT_PLACEHOLDER_TEXT =
+    placeholderTextEl?.textContent?.trim() || "Choose a deck to start reviewing cards.";
+  const DEFAULT_TIPS = [
+    "Tip: five quick cards now beat a perfect session later.",
+    "Hint: revisit tricky cards after a short break for better retention.",
+    "Reminder: say the answer out loud—speaking builds recall.",
+    "Advice: mix easy wins with tough cards to keep motivation high.",
+  ];
+  const formatDeckLang = (deck) => (deck?.lang === "de" ? "German" : "English");
   const wordListEl = qs("[data-word-list]");
   const studyBtn = qs("#btn-deck-study");
   const addBtn = qs("#btn-deck-add");
   const editDeckBtn = qs("#btn-deck-edit");
   const deleteDeckBtn = qs("#btn-deck-delete");
+  const exportDeckBtn = qs("#btn-deck-export");
 
   if (!deckList || !wordListEl) return null;
 
@@ -942,20 +1191,59 @@ function initFlashcardWorkspace(options = {}) {
   let activeDeckId = null;
   let filterTerm = "";
   let currentWords = [];
+  let wordFilterTerm = "";
 
-  const setPlaceholder = (text) => {
+  const pickTip = () => DEFAULT_TIPS[Math.floor(Math.random() * DEFAULT_TIPS.length)];
+
+  const resetWordSearch = () => {
+    wordFilterTerm = "";
+    if (wordSearchInput) {
+      wordSearchInput.value = "";
+    }
+  };
+
+  const toggleCardSearch = (visible) => {
+    if (wordSearchWrap) {
+      wordSearchWrap.hidden = !visible;
+    }
+    if (wordSearchInput) {
+      wordSearchInput.disabled = !visible;
+      if (!visible) {
+        resetWordSearch();
+      }
+    }
+  };
+
+  const setPlaceholder = (text, { showTip = false } = {}) => {
     if (!placeholderEl) return;
     if (!text) {
       placeholderEl.hidden = true;
       if (wordListEl && wordListEl.children.length) {
         wordListEl.hidden = false;
       }
+      if (placeholderTipEl) {
+        placeholderTipEl.hidden = true;
+        placeholderTipEl.textContent = "";
+      }
       return;
     }
-    placeholderEl.textContent = text;
+    if (placeholderTextEl) {
+      placeholderTextEl.textContent = text;
+    } else {
+      placeholderEl.textContent = text;
+    }
     placeholderEl.hidden = false;
     if (wordListEl) {
       wordListEl.hidden = true;
+    }
+    if (placeholderTipEl) {
+      if (showTip) {
+        placeholderTipEl.textContent = pickTip();
+        placeholderTipEl.hidden = false;
+      } else {
+        placeholderTipEl.hidden = true;
+        placeholderTipEl.textContent = "";
+      }
     }
   };
 
@@ -965,13 +1253,15 @@ function initFlashcardWorkspace(options = {}) {
     if (studyBtn) studyBtn.disabled = !enabled;
     if (editDeckBtn) editDeckBtn.disabled = !enabled;
     if (deleteDeckBtn) deleteDeckBtn.disabled = !enabled;
+    if (exportDeckBtn) exportDeckBtn.disabled = !enabled;
   };
 
   const updateHead = (deck) => {
     if (!deck) {
       if (head) head.hidden = true;
       if (statsWrap) statsWrap.hidden = true;
-      setPlaceholder("Select a deck to view its cards.");
+      setPlaceholder(DEFAULT_PLACEHOLDER_TEXT, { showTip: true });
+      toggleCardSearch(false);
       updateButtons();
       return;
     }
@@ -981,12 +1271,24 @@ function initFlashcardWorkspace(options = {}) {
       titleEl.title = deck.description || deck.title;
     }
     if (metaEl) {
-      metaEl.textContent = deck.category || "Personal deck";
+      const langText = formatDeckLang(deck);
+      const category = deck.category ? `${deck.category} · ` : "";
+      metaEl.textContent = `${category}${langText}`;
     }
     if (statsWrap && countEl) {
       statsWrap.hidden = false;
     }
+    toggleCardSearch(true);
     updateButtons();
+  };
+
+  const applyWordFilter = (items = []) => {
+    if (!wordFilterTerm) return items;
+    const term = wordFilterTerm.toLowerCase();
+    return items.filter((item) => {
+      const haystack = `${item.word || ""} ${item.definition || ""} ${item.example || ""}`.toLowerCase();
+      return haystack.includes(term);
+    });
   };
 
   const renderDecks = () => {
@@ -1015,11 +1317,11 @@ function initFlashcardWorkspace(options = {}) {
     deckList.innerHTML = items
       .map((deck) => {
         const meta = deck.description || "No description yet";
-        const badge = escapeHtml(deck.category || "General");
+        const badge = escapeHtml(formatDeckLang(deck));
         const activeClass = deck.id === activeDeckId ? "active" : "";
         return `
           <li class="deck-item ${activeClass}" data-deck-id="${deck.id}">
-            <div>
+            <div class="deck-info">
               <p class="deck-title">${escapeHtml(deck.title)}</p>
               <p class="deck-meta">${escapeHtml(meta)}</p>
             </div>
@@ -1032,11 +1334,15 @@ function initFlashcardWorkspace(options = {}) {
 
   const renderWords = (words = []) => {
     if (!wordListEl) return;
+    const filtered = applyWordFilter(words);
     if (!words.length) {
       wordListEl.innerHTML = "";
       setPlaceholder("No cards yet. Use Add to create one.");
+    } else if (!filtered.length) {
+      wordListEl.innerHTML = "";
+      setPlaceholder("No cards match your search.");
     } else {
-      wordListEl.innerHTML = words.map((item) => renderFlashcardWordCard(item)).join("");
+      wordListEl.innerHTML = filtered.map((item) => renderFlashcardWordCard(item)).join("");
       wordListEl.hidden = false;
       if (placeholderEl) placeholderEl.hidden = true;
     }
@@ -1077,6 +1383,7 @@ function initFlashcardWorkspace(options = {}) {
     const deck = decks.find((item) => item.id === deckId);
     if (!deck) return;
     activeDeckId = deckId;
+    resetWordSearch();
     updateHead(deck);
     renderDecks();
     loadWords(deckId);
@@ -1085,6 +1392,7 @@ function initFlashcardWorkspace(options = {}) {
   const clearSelection = () => {
     activeDeckId = null;
     currentWords = [];
+    resetWordSearch();
     if (wordListEl) {
       wordListEl.innerHTML = "";
       wordListEl.hidden = true;
@@ -1108,6 +1416,8 @@ function initFlashcardWorkspace(options = {}) {
         loadWords(activeDeckId, { silent: true });
       } else if (autoSelect) {
         selectDeck(decks[0].id);
+      } else {
+        clearSelection();
       }
     } catch (err) {
       console.error("Failed to load decks:", err);
@@ -1116,6 +1426,37 @@ function initFlashcardWorkspace(options = {}) {
         emptyState.textContent = err.message || "Failed to load decks.";
       }
       clearSelection();
+    }
+  };
+
+  const exportDeck = async (deck) => {
+    if (!deck || !exportDeckBtn) return;
+    const defaultLabel = exportDeckBtn.textContent || "Export";
+    exportDeckBtn.disabled = true;
+    exportDeckBtn.textContent = "Preparing…";
+    try {
+      const res = await apiFetch(PATHS.flashcardDeckExport(deck.id), "GET");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const slug = (deck.title || `deck-${deck.id}`)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      const stamp = new Date().toISOString().slice(0, 10);
+      const filename = `${slug || `deck-${deck.id}`}-${stamp}.csv`;
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export deck:", err);
+      alert(err.message || "Unable to export deck.");
+    } finally {
+      exportDeckBtn.textContent = defaultLabel;
+      exportDeckBtn.disabled = !activeDeckId;
     }
   };
 
@@ -1138,7 +1479,52 @@ function initFlashcardWorkspace(options = {}) {
       await loadDecks(true);
     },
   });
-  const studyModal = initStudyModal();
+  const studyModal = initStudyModal({
+    onDifficultySaved: (updatedCard) => {
+      if (!updatedCard || !Number.isFinite(updatedCard.id)) return;
+      const idx = currentWords.findIndex((item) => item.id === updatedCard.id);
+      if (idx === -1) return;
+      currentWords[idx].difficulty = updatedCard.difficulty;
+      renderWords(currentWords);
+    },
+    onSessionComplete: () => {
+      void refreshFlashcardStats();
+    },
+  });
+  const sessionEmptyModal = (() => {
+    const modal = qs("#session-empty-modal");
+    if (!modal) return null;
+    const closeTargets = modal.querySelectorAll("[data-session-empty-close]");
+    const close = () => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    };
+    closeTargets.forEach((btn) => btn.addEventListener("click", close));
+    return {
+      open() {
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+      },
+      close,
+    };
+  })();
+
+  const startGlobalDeckSession = async () => {
+    if (!studyModal) {
+      throw new Error("Study session is unavailable right now.");
+    }
+    const data = await api(PATHS.flashcardSession, "GET");
+    const cards = Array.isArray(data?.cards) ? data.cards : [];
+    if (!cards.length) {
+      sessionEmptyModal?.open();
+      return;
+    }
+    const langLabel = data.lang === "de" ? "German" : "English";
+    studyModal.startSession({
+      deck: { title: `${langLabel} session` },
+      cards: shuffle(cards),
+    });
+  };
 
   if (wordListEl) {
     wordListEl.addEventListener("click", (event) => {
@@ -1227,12 +1613,147 @@ function initFlashcardWorkspace(options = {}) {
     });
   }
 
-  loadDecks(true);
+  if (exportDeckBtn) {
+    exportDeckBtn.addEventListener("click", async () => {
+      if (!activeDeckId) return;
+      const deck = decks.find((d) => d.id === activeDeckId);
+      if (!deck) return;
+      await exportDeck(deck);
+    });
+  }
+
+  loadDecks(false);
+
+  wordSearchInput?.addEventListener("input", (event) => {
+    const value = (event.target.value || "").toString();
+    wordFilterTerm = value.trim().toLowerCase();
+    renderWords(currentWords);
+  });
 
   return {
     reload(autoSelect = false) {
       loadDecks(autoSelect);
     },
+    async startGlobalSession() {
+      await startGlobalDeckSession();
+    },
+  };
+}
+
+function initDeckImportModal(options = {}) {
+  const modal = qs("#deck-import-modal");
+  const openBtn = qs("#btn-import-deck");
+  if (!modal || !openBtn) return null;
+
+  const { onDeckImported } = options || {};
+  const form = modal.querySelector("#deck-import-form");
+  const hint = modal.querySelector("[data-import-hint]");
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  const fileInput = form?.querySelector('input[name="file"]');
+  const langInput = form?.querySelector('select[name="lang"]');
+  const defaultHint = hint ? hint.textContent : "";
+  const defaultSubmitText = submitBtn ? submitBtn.textContent : "Import deck";
+
+  const setHint = (text, status) => {
+    if (!hint) return;
+    hint.textContent = text;
+    hint.classList.remove("success", "error");
+    if (status === "success" || status === "error") {
+      hint.classList.add(status);
+    }
+  };
+
+  const handleEsc = (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    closeModal();
+  };
+
+  function openModal() {
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.addEventListener("keydown", handleEsc);
+    form?.reset();
+    if (langInput) {
+      langInput.value = "en";
+    }
+    setHint(defaultHint, null);
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultSubmitText;
+    }
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.removeEventListener("keydown", handleEsc);
+    form?.reset();
+    if (langInput) {
+      langInput.value = "en";
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultSubmitText;
+    }
+    setHint(defaultHint, null);
+  }
+
+  openBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    openModal();
+  });
+
+  modal.addEventListener("click", (event) => {
+    const closer = event.target.closest("[data-modal-close]");
+    if (!closer) return;
+    event.preventDefault();
+    closeModal();
+  });
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!fileInput || !fileInput.files || !fileInput.files.length) {
+      setHint("Select a CSV file to import.", "error");
+      return;
+    }
+    const file = fileInput.files[0];
+    if (!file || !file.name.toLowerCase().endsWith(".csv")) {
+      setHint("Only CSV files are supported.", "error");
+      return;
+    }
+
+    const formData = new FormData(form);
+    formData.set("file", file);
+    const langValue = (formData.get("lang") || "en").toString().trim().toLowerCase();
+    formData.set("lang", langValue || "en");
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Importing…";
+    }
+    setHint("Importing deck…");
+
+    try {
+      const deck = await api(PATHS.flashcardImport, "POST", formData);
+      setHint(`Imported “${deck.title}”`, "success");
+      if (typeof onDeckImported === "function") {
+        onDeckImported(deck);
+      }
+      setTimeout(() => closeModal(), 700);
+    } catch (err) {
+      console.error("Failed to import deck:", err);
+      setHint(err.message || "Failed to import deck", "error");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = defaultSubmitText;
+      }
+    }
+  });
+
+  return {
+    open: openModal,
+    close: closeModal,
   };
 }
 
@@ -1251,6 +1772,7 @@ function initDeckCreator(options = {}) {
   const titleInput = form?.querySelector('input[name="title"]');
   const descriptionInput = form?.querySelector('textarea[name="description"]');
   const categoryInput = form?.querySelector('select[name="category"]');
+  const langInput = form?.querySelector('select[name="lang"]');
 
   const defaultHeaderText = headerLabel ? headerLabel.textContent : "New deck";
   const defaultModalTitle = modalTitleEl ? modalTitleEl.textContent : "Create flashcard set";
@@ -1307,6 +1829,9 @@ function initDeckCreator(options = {}) {
         if (titleInput) titleInput.value = deck.title || "";
         if (descriptionInput) descriptionInput.value = deck.description || "";
         if (categoryInput) categoryInput.value = deck.category || "";
+        if (langInput) langInput.value = deck.lang || "en";
+      } else if (langInput) {
+        langInput.value = "en";
       }
     }
     if (hint) {
@@ -1328,6 +1853,9 @@ function initDeckCreator(options = {}) {
     applyMode();
     if (form) {
       form.reset();
+    }
+    if (langInput) {
+      langInput.value = "en";
     }
     if (hint) {
       hint.classList.remove("success", "error");
@@ -1351,6 +1879,7 @@ function initDeckCreator(options = {}) {
       title: (data.get("title") || "").toString().trim(),
       description: (data.get("description") || "").toString().trim(),
       category: (data.get("category") || "").toString().trim(),
+      lang: (data.get("lang") || "").toString().trim().toLowerCase(),
     };
     if (!payload.title || !payload.description) {
       setHint("Please fill Title and Description.", "error");
@@ -1358,6 +1887,10 @@ function initDeckCreator(options = {}) {
     }
     if (!payload.category) {
       payload.category = null;
+    }
+    if (!["en", "de"].includes(payload.lang)) {
+      setHint("Please choose a language.", "error");
+      return;
     }
 
     const submitText = submitBtn ? submitBtn.textContent : "";
@@ -1410,6 +1943,7 @@ async function bootstrap() {
   try {
     await api(PATHS.me);        // auth check (+ auto refresh)
     await loadSettings();       // pull saved language from DB
+    await loadSessionWords();   // fetch current session progress
   } catch (err) {
     console.warn("Auth check failed:", err.message);
     window.location = "/auth";
@@ -1440,6 +1974,36 @@ async function loadSettings() {
   }
 }
 
+async function loadSessionWords() {
+  try {
+    const data = await api(PATHS.randomSessionWords, "GET");
+    const value = Number(data?.session_words);
+    sessionWords = Number.isFinite(value) ? value : 0;
+  } catch (err) {
+    console.error("Failed to load session words:", err.message);
+    sessionWords = 0;
+  } finally {
+    updateSessionBadge();
+  }
+}
+
+async function incrementSessionWords() {
+  try {
+    const data = await api(PATHS.randomSessionWords, "PUT");
+    const value = Number(data?.session_words);
+    if (Number.isFinite(value)) {
+      sessionWords = value;
+    } else {
+      sessionWords += 1;
+    }
+  } catch (err) {
+    console.error("Failed to increment session words:", err.message);
+    sessionWords += 1;
+  } finally {
+    updateSessionBadge();
+  }
+}
+
 /* ===================== DOM EVENTS ===================== */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1457,6 +2021,30 @@ document.addEventListener("DOMContentLoaded", () => {
       flashcardController?.reload(autoSelect);
     },
   });
+  initDeckImportModal({
+    onDeckImported: () => {
+      flashcardController?.reload(true);
+      void refreshFlashcardStats();
+    },
+  });
+  const globalSessionBtn = qs("#btn-start-session");
+  if (globalSessionBtn) {
+    const defaultLabel = globalSessionBtn.textContent || "Start new session";
+    globalSessionBtn.addEventListener("click", async () => {
+      if (!flashcardController) return;
+      globalSessionBtn.disabled = true;
+      globalSessionBtn.textContent = "Preparing session…";
+      try {
+        await flashcardController.startGlobalSession();
+      } catch (err) {
+        console.error("Failed to start global session:", err);
+        alert(err.message || "Unable to start session.");
+      } finally {
+        globalSessionBtn.disabled = false;
+        globalSessionBtn.textContent = defaultLabel;
+      }
+    });
+  }
   const randomAddController = initRandomAddModal();
 
   // ----- Random word -----
@@ -1651,6 +2239,7 @@ document.addEventListener("DOMContentLoaded", () => {
           status: rate,
           word_lang: currentLang,
         });
+        await incrementSessionWords();
         if (msg) {
           msg.textContent = `Saved as ${rate.toUpperCase()}`;
           msg.className = "msg ok";

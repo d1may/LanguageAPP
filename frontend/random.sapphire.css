@@ -1,3 +1,7 @@
+body.random{
+  background:linear-gradient(120deg,#0b1022,#0f172a);
+}
+
 .random-shell{
   max-width:960px;
   margin:0 auto;
@@ -37,6 +41,12 @@
   flex-wrap:wrap;
   align-items:flex-end;
 }
+.session-congrats{
+  margin-top:12px;
+  font-size:16px;
+  font-weight:600;
+  color:#9edcff;
+}
 
 .meta-chip{
   padding:12px 16px;
@@ -44,6 +54,11 @@
   border:1px solid #ffffff12;
   background:rgba(15,23,42,.75);
   min-width:150px;
+}
+.meta-chip.session-complete{
+  background:linear-gradient(135deg,rgba(113,188,255,.32),rgba(9,38,68,.92));
+  border-color:rgba(113,188,255,.65);
+  box-shadow:0 10px 30px rgba(74,147,225,.4);
 }
 
 .meta-title{
@@ -333,6 +348,21 @@
   gap:18px;
   align-items:flex-start;
   flex-wrap:wrap;
+}
+.library-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.btn.library-save{
+  background:#4ed8ff;
+  color:#04121a;
+  border:1px solid rgba(154,235,255,.7);
+  box-shadow:none;
+}
+.btn.library-save:hover{
+  background:#74e3ff;
 }
 
 .muted-small{

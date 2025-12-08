@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 from authx import TokenPayload
 
 from core.database import get_db
-from schemas.word import WordRatingIn, WordRatingOut, WordListOut, WordLibraryOut
+from schemas.word import WordRatingIn, WordRatingOut, WordListOut, WordLibraryOut, WordLibraryUpdateIn
 from services.word_services import WordServices
 from models.user import User
+from models.randomWordList import WordList
 from .auth import security
 
 
@@ -31,18 +32,19 @@ LANG_DECKS = {
 VALID_LANGS = {"en", "de"}
 
 
+def serialize_word(word: WordList) -> WordListOut:
+    return WordListOut(
+        id=word.id,
+        word=word.word,
+        status=word.status,
+        translate=word.translate,
+        comment=word.comment,
+        word_lang=word.lang,
+    )
+
+
 def serialize_word_list(words):
-    return [
-        WordListOut(
-            id=word.id,
-            word=word.word,
-            status=word.status,
-            translate=word.translate,
-            comment=word.comment,
-            word_lang=word.lang,
-        )
-        for word in words
-    ]
+    return [serialize_word(word) for word in words]
 
 
 @router.get("/random/{lang}")
@@ -104,8 +106,48 @@ async def get_word_library(
             "low": serialize_word_list(snapshot["low"]),
         },
     }
+
+
+@router.put("/library/{word_id}", response_model=WordListOut)
+async def update_word_in_library(
+    word_id: int,
+    data: WordLibraryUpdateIn,
+    payload: TokenPayload = Depends(security.access_token_required),
+    db: Session = Depends(get_db),
+):
+    update_payload = data.dict(exclude_unset=True)
+    if not update_payload:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+
+    user_id = int(payload.sub)
+    svc = WordServices(db)
+    entity = svc.update_word_meta(user_id=user_id, word_id=word_id, **update_payload)
+    if not entity:
+        raise HTTPException(status_code=404, detail="Word not found")
+    return serialize_word(entity)
+
+
 def resolve_user_lang(db: Session, user_id: int) -> str:
     user = db.get(User, user_id)
     lang = (user.random_word_lang if user else None) or "en"
     lang = lang.lower()
     return lang if lang in VALID_LANGS else "en"
+
+@router.get("/random_session_words")
+async def get_random_session_words(payload: TokenPayload = Depends(security.access_token_required), db: Session = Depends(get_db)):
+    user_id = int(payload.sub)
+    svc = WordServices(db)
+    entity = svc.get_random_session_words(user_id=user_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return entity
+
+@router.put("/random_session_words")
+async def increment_random_session_words(payload: TokenPayload = Depends(security.access_token_required), db: Session = Depends(get_db)):
+    user_id = int(payload.sub)
+    svc = WordServices(db)
+    try:
+        entity = svc.record_result(user_id=user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return entity

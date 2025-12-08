@@ -112,15 +112,15 @@
       <div class="wordle-score">
         <div class="score-item">
           <span class="score-title">Played</span>
-          <strong>128</strong>
+          <strong id="wordle-played-count">{{ wordle_stats.played | default(0) }}</strong>
         </div>
         <div class="score-item">
-          <span class="score-title">Win %</span>
-          <strong>82</strong>
+          <span class="score-title">Wins</span>
+          <strong id="wordle-win-count">{{ wordle_stats.wins | default(0) }}</strong><span class="score-procent">%</span>
         </div>
         <div class="score-item">
           <span class="score-title">Streak</span>
-          <strong>5</strong>
+          <strong id="wordle-streak-count">{{ wordle_stats.win_streak | default(0) }}</strong>
         </div>
       </div>
     </div>
