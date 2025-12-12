@@ -2130,13 +2130,17 @@ document.addEventListener("DOMContentLoaded", () => {
     input.addEventListener("change", async () => {
       if (!input.checked) return;
       const newTheme = input.value;
+      const prevTheme = currentTheme;
+      currentTheme = newTheme;
+      applyTheme(currentTheme);
+      updateThemeRadios();
       try {
         const data = await api(PATHS.settings, "PUT", {
           random_word_lang: currentLang,
           theme: newTheme,
         });
         currentLang = data.random_word_lang || currentLang;
-        currentTheme = data.theme || newTheme;
+        currentTheme = data.theme || currentTheme;
         applyTheme(currentTheme);
         updateThemeRadios();
         if (libraryController?.reload) {
@@ -2144,6 +2148,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (err) {
         console.error("Failed to update theme:", err.message);
+        currentTheme = prevTheme;
+        applyTheme(currentTheme);
         updateThemeRadios();
       }
     });

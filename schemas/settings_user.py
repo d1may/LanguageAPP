@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Literal
 
 
-ThemeLiteral = Literal["amber", "sapphire"]
+ThemeLiteral = Literal["amber", "sapphire", "arctic"]
 LangLiteral = Literal["en", "de"]
 
 

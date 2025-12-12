@@ -1,17 +1,61 @@
 const THEME_STORAGE_KEY = "app-theme";
-const NORMALIZED_THEMES = new Set(["amber", "sapphire"]);
+const FALLBACK_THEME = "amber";
+const NORMALIZED_THEMES = new Set([FALLBACK_THEME]);
 let activeTheme;
+
+function syncThemeRegistry() {
+  const sheets = document.querySelectorAll("link[data-theme-sheet]");
+  if (!sheets.length) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => syncThemeRegistry(),
+      { once: true },
+    );
+    return;
+  }
+
+  sheets.forEach((link) => {
+    const themeName = (link.dataset.themeSheet || "").trim();
+    if (themeName) {
+      NORMALIZED_THEMES.add(themeName);
+    }
+  });
+}
+
+syncThemeRegistry();
+
+function normalizeTheme(theme) {
+  const candidate = typeof theme === "string" ? theme.trim() : "";
+  if (candidate && NORMALIZED_THEMES.has(candidate)) {
+    return candidate;
+  }
+
+  if (candidate) {
+    const link = document.querySelector(`link[data-theme-sheet="${candidate}"]`);
+    if (link) {
+      NORMALIZED_THEMES.add(candidate);
+      return candidate;
+    }
+  }
+
+  if (NORMALIZED_THEMES.has(FALLBACK_THEME)) {
+    return FALLBACK_THEME;
+  }
+
+  const iterator = NORMALIZED_THEMES.values().next();
+  return iterator.value || FALLBACK_THEME;
+}
 
 function readStoredTheme() {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored && NORMALIZED_THEMES.has(stored)) {
-      return stored;
+    if (stored) {
+      return normalizeTheme(stored);
     }
   } catch (err) {
     console.warn("Unable to read stored theme:", err);
   }
-  return "amber";
+  return normalizeTheme();
 }
 
 function storeTheme(theme) {
@@ -57,7 +101,7 @@ function updateThemeSheets(theme) {
 }
 
 export function applyTheme(theme, persist = true) {
-  const normalized = NORMALIZED_THEMES.has(theme) ? theme : "amber";
+  const normalized = normalizeTheme(theme);
   activeTheme = normalized;
   updateThemeAttribute(normalized);
   updateThemeSheets(normalized);
