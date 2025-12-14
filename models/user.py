@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, UniqueConstraint
 from core.database import Base
-
+# from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -16,3 +16,4 @@ class User(Base):
     wordle_losses = Column(Integer, nullable=False, server_default="0")
     wordle_win_streak = Column(Integer, nullable=False, server_default="0")
     random_session_words = Column(Integer, nullable=False, server_default="0")
+    # last_time = Column(DateTime, default=datetime.utcnow, nullable=True)

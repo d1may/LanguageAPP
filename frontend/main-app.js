@@ -157,6 +157,274 @@ function setTableMessage(target, text) {
   `;
 }
 
+function initWordChainGame() {
+  const startBtn = qs("[data-wordchain-start]");
+  const panel = qs("[data-wordchain-panel]");
+  if (!startBtn || !panel) return null;
+
+  const form = panel.querySelector("[data-wordchain-form]");
+  const input = panel.querySelector("[data-wordchain-input]");
+  const submitBtn = panel.querySelector("[data-wordchain-submit]");
+  const hint = panel.querySelector("[data-wordchain-hint]");
+  const log = panel.querySelector("[data-wordchain-log]");
+  const placeholder = panel.querySelector("[data-wordchain-empty]");
+  const nextWrap = panel.querySelector("[data-wordchain-next]");
+  const letterEl = panel.querySelector("[data-wordchain-letter]");
+  const timerWrap = panel.querySelector("[data-wordchain-timer]");
+  const timerValue = panel.querySelector("[data-wordchain-timer-value]");
+  const timerProgress = panel.querySelector("[data-wordchain-timer-progress]");
+  const wordCountDisplay = document.querySelector("[data-wordchain-count]");
+
+  let requiredLetter = null;
+  let busy = false;
+  let active = false;
+  let waitingForBot = false;
+  let timeLeft = 15;
+  let timerId = null;
+  const TURN_TIME_SECONDS = 15;
+  let wordCount = 0;
+
+  const setHint = (message, tone = "info") => {
+    if (!hint) return;
+    hint.textContent = message;
+    hint.classList.remove("is-error", "is-success");
+    if (tone === "error") {
+      hint.classList.add("is-error");
+    } else if (tone === "success") {
+      hint.classList.add("is-success");
+    }
+  };
+
+  const togglePlaceholder = (visible) => {
+    if (!placeholder || !log) return;
+    if (visible) {
+      placeholder.hidden = false;
+      if (!placeholder.parentElement) {
+        log.appendChild(placeholder);
+      }
+    } else {
+      placeholder.hidden = true;
+      if (placeholder.parentElement) {
+        placeholder.remove();
+      }
+    }
+  };
+
+  const appendLogEntry = (author, word, role) => {
+    if (!log) return;
+    togglePlaceholder(false);
+    const item = document.createElement("li");
+    item.className = `wordchain-log-item wordchain-log-${role}`;
+    item.innerHTML = `
+      <span class="wordchain-log-meta">${escapeHtml(author)}</span>
+      <span class="wordchain-log-word">${escapeHtml(word)}</span>
+    `;
+    log.insertBefore(item, log.firstElementChild);
+    while (log.children.length > 16) {
+      const last = log.lastElementChild;
+      if (!last || last === placeholder) break;
+      log.removeChild(last);
+    }
+  };
+
+  const updateWordCount = () => {
+    if (!wordCountDisplay) return;
+    wordCountDisplay.textContent = wordCount.toString();
+  };
+
+  const setTimerVisible = (visible) => {
+    if (!timerWrap) return;
+    timerWrap.hidden = !visible;
+    if (!visible) {
+      timerWrap.classList.remove("danger");
+    }
+  };
+
+  const updateTimerUI = () => {
+    if (!timerValue || !timerProgress) return;
+    const normalized = Math.max(0, Math.min(TURN_TIME_SECONDS, timeLeft));
+    timerValue.textContent = `${normalized}s`;
+    const percent = (normalized / TURN_TIME_SECONDS) * 100;
+    timerProgress.style.width = `${percent}%`;
+    timerWrap?.classList.toggle("danger", normalized <= 5);
+  };
+
+  const stopTurnTimer = () => {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  };
+
+  const handleTimeExpired = () => {
+    finishMatch("Time's up! Restart the duel to try again.", "error");
+  };
+
+  const startTurnTimer = () => {
+    if (!active || !timerWrap) return;
+    setTimerVisible(true);
+    stopTurnTimer();
+    timeLeft = TURN_TIME_SECONDS;
+    updateTimerUI();
+    timerId = window.setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        updateTimerUI();
+        stopTurnTimer();
+        handleTimeExpired();
+      } else {
+        updateTimerUI();
+      }
+    }, 1000);
+  };
+
+  const setRequiredLetter = (letter) => {
+    requiredLetter = letter ? letter.toLowerCase() : null;
+    if (!nextWrap) return;
+    if (!requiredLetter) {
+      nextWrap.hidden = true;
+      if (letterEl) letterEl.textContent = "—";
+      return;
+    }
+    nextWrap.hidden = false;
+    if (letterEl) letterEl.textContent = requiredLetter.toUpperCase();
+  };
+
+  const applyFormState = () => {
+    const disabled = !active || busy;
+    if (form) {
+      form.classList.toggle("is-disabled", !active);
+      form.classList.toggle("is-busy", busy);
+    }
+    if (input) input.disabled = disabled;
+    if (submitBtn) submitBtn.disabled = disabled;
+  };
+
+  const resetMatch = () => {
+    active = true;
+    busy = false;
+    waitingForBot = false;
+    wordCount = 0;
+    updateWordCount();
+    setHint("Type any starting word to begin the chain.");
+    setRequiredLetter(null);
+    if (log) {
+      log.innerHTML = "";
+    }
+    togglePlaceholder(true);
+    if (input) {
+      input.value = "";
+    }
+    setTimerVisible(true);
+    startTurnTimer();
+    applyFormState();
+  };
+
+  const finishMatch = (message, tone = "success") => {
+    active = false;
+    busy = false;
+    waitingForBot = false;
+    stopTurnTimer();
+    setTimerVisible(false);
+    setHint(message, tone);
+    setRequiredLetter(null);
+    applyFormState();
+  };
+
+  const ensurePanelVisible = () => {
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const clearUserHistory = async () => {
+    try {
+      await api(PATHS.wordChainClear, "DELETE");
+    } catch (err) {
+      console.error("Failed to clear word chain history:", err);
+    }
+  };
+
+  startBtn.addEventListener("click", () => {
+    ensurePanelVisible();
+    clearUserHistory()
+      .finally(() => {
+        resetMatch();
+        if (input) {
+          input.focus();
+        }
+      });
+  });
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!active || busy) return;
+    const value = (input?.value || "").trim();
+    if (!value) {
+      setHint("Enter a word before sending.", "error");
+      return;
+    }
+    const normalized = value.toLowerCase();
+    if (normalized.length < 2) {
+      setHint("Use at least two letters.", "error");
+      return;
+    }
+    if (requiredLetter && normalized[0] !== requiredLetter) {
+      setHint(`Word must start with “${requiredLetter.toUpperCase()}”.`, "error");
+      return;
+    }
+    busy = true;
+    applyFormState();
+    setHint("Checking word…");
+    try {
+      const addResponse = await api(PATHS.wordChainAdd(normalized), "GET");
+      if (addResponse && addResponse.status === "False") {
+        throw new Error(addResponse.comment || "Word rejected.");
+      }
+      appendLogEntry("You", normalized, "player");
+      wordCount += 1;
+      updateWordCount();
+      setRequiredLetter(normalized.charAt(normalized.length - 1));
+      if (input) {
+        input.value = "";
+      }
+      waitingForBot = true;
+      stopTurnTimer();
+      setHint("Bot is thinking…");
+      const botReply = await api(PATHS.wordChainBot, "POST", { word: normalized });
+      if (!botReply || !botReply.word) {
+        waitingForBot = false;
+        finishMatch("Bot surrendered. Streak is yours!");
+        return;
+      }
+      const botWord = botReply.word.toString();
+      appendLogEntry("Bot", botWord, "bot");
+      const lastChar = botWord.charAt(botWord.length - 1).toLowerCase();
+      setRequiredLetter(lastChar);
+      setHint("Your turn — follow the highlighted letter.");
+      waitingForBot = false;
+      startTurnTimer();
+    } catch (err) {
+      console.error("Word chain move failed:", err);
+      setHint(err.message || "Unable to play this word.", "error");
+      if (waitingForBot) {
+        waitingForBot = false;
+        startTurnTimer();
+      }
+    } finally {
+      busy = false;
+      applyFormState();
+      if (active && input) {
+        input.focus();
+      }
+    }
+  });
+
+  return {
+    reset: resetMatch,
+  };
+}
+
 function createEditableField({
   value = "",
   placeholder = "",
@@ -536,7 +804,7 @@ function initWordModal(options = {}) {
     setTimeout(() => {
       const firstField = form?.querySelector("input, textarea");
       firstField?.focus();
-    }, 30);
+    }, 15);
   }
 
   function closeModal() {
@@ -1841,7 +2109,7 @@ function initDeckCreator(options = {}) {
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
     document.addEventListener("keydown", handleEsc);
-    setTimeout(focusFirstField, 30);
+    setTimeout(focusFirstField, 15);
   }
 
   function closeModal() {
@@ -2008,6 +2276,7 @@ async function incrementSessionWords() {
 
 document.addEventListener("DOMContentLoaded", () => {
   bootstrap();
+  initWordChainGame();
   const libraryController = initWordLibrary();
   let deckCreatorController;
   const flashcardController = initFlashcardWorkspace({

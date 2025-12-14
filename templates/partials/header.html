@@ -11,6 +11,9 @@
     <a data-route="wordle"
        class="{% if active_page == 'wordle' %}active{% endif %}"
        href="{{ url_for('wordle_page') }}">Wordle</a>
+    <a data-route="wordchain"
+       class="{% if active_page == 'wordchain' %}active{% endif %}"
+       href="{{ url_for('word_chain_page') }}">Words</a>
     <a data-route="flashcard"
        class="{% if active_page == 'flashcard' %}active{% endif %}"
        href="{{ url_for('flashcard_page') }}">Flashcard</a>

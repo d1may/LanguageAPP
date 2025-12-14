@@ -64,3 +64,6 @@ class WordServices:
 
     def record_result(self, *, user_id: int) -> dict:
         return self.user_repo.record_random_session_words(user_id=user_id)
+
+    def refresh_random(self, *, user_id: int) -> dict:
+        return self.user_repo.refresh_random_session_words(user_id=user_id)

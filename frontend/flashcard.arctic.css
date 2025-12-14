@@ -235,7 +235,7 @@ body.flashcard{
 .card-panel{
   display:flex;
   flex-direction:column;
-  gap:24px;
+  gap:16px;
 }
 
 .card-filter{
@@ -672,7 +672,8 @@ body.flashcard{
 
 .btn.ghost.danger{
   border-color:#f2687f77;
-  color:#ffe1e6;
+  background: #F78198;
+  color:#ffffff;
 }
 
 .btn:active{

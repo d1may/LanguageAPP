@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Words{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', path='/wordchain.css') }}" data-theme-sheet="amber">
+  <link rel="stylesheet" href="{{ url_for('static', path='/wordchain.sapphire.css') }}" data-theme-sheet="sapphire" disabled>
+  <link rel="stylesheet" href="{{ url_for('static', path='/wordchain.arctic.css') }}" data-theme-sheet="arctic" disabled>
+{% endblock %}
+
+{% block body_class %}wordchain-body{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="wordchain-shell">
+  <section class="wordchain-hero">
+    <div class="wordchain-hero-copy">
+      <h1>Word Chain Arena</h1>
+      <p class="muted">
+        Keep the loop alive by starting every new word with the final letter of the previous one.
+        Sharpen reflexes, recall vocabulary faster, and push the streak further.
+      </p>
+      <div class="wordchain-actions">
+        <button type="button" class="btn primary wordchain-btn" data-wordchain-start>Play with bot</button>
+        <button type="button" class="btn ghost wordchain-btn">Friend battle</button>
+      </div>
+      <ul class="wordchain-metrics">
+        <li>
+          <span class="metric-label">Chain record</span>
+          <strong class="metric-value">23 words</strong>
+        </li>
+        <li>
+          <span class="metric-label">Avg. response</span>
+          <strong class="metric-value">4.1 s</strong>
+        </li>
+        <li>
+          <span class="metric-label">Language</span>
+          <strong class="metric-value">{{ word_chain_lang_label | default("English") }}</strong>
+        </li>
+      </ul>
+    </div>
+
+    <div class="wordchain-hero-card">
+      <p class="section-label">Practice prompt</p>
+      <div class="chain-preview" aria-live="polite">
+        <div class="chain-word">Orbit</div>
+        <span class="chain-arrow">&rarr;</span>
+        <div class="chain-word bot">Trail</div>
+        <span class="chain-arrow">&rarr;</span>
+        <div class="chain-word">Low</div>
+      </div>
+      <ul class="wordchain-tips">
+        <li>Stay within the selected language deck.</li>
+        <li>Repeated words break the streak.</li>
+        <li>Bonus points for themed categories.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wordchain-game" data-wordchain-panel hidden>
+    <div class="wordchain-game-head">
+      <div>
+        <p class="section-label wordchain-count-label">
+          Words <span class="count-words" data-wordchain-count>0</span>
+        </p>
+        <div class="wordchain-next" data-wordchain-next hidden>
+          <span>Next letter</span>
+          <span class="letter-pill" data-wordchain-letter>?</span>
+        </div>
+      </div>
+      <div class="wordchain-head-meta">
+        <div class="wordchain-timer-block">
+          <div class="wordchain-timer" data-wordchain-timer hidden>
+            <div class="timer-head">
+              <span>Time left</span>
+              <span class="timer-remaining" data-wordchain-timer-value>30s</span>
+            </div>
+            <div class="timer-bar">
+              <div class="timer-bar-fill" data-wordchain-timer-progress></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="wordchain-hint" data-wordchain-hint aria-live="polite">
+      Start a duel to send the opening word.
+    </p>
+    <form class="wordchain-form" data-wordchain-form novalidate>
+      <label for="wordchain-input" class="sr-only">Your word</label>
+      <div class="wordchain-input-row">
+        <input
+          id="wordchain-input"
+          type="text"
+          placeholder="Type your word"
+          autocomplete="off"
+          maxlength="50"
+          data-wordchain-input
+          required
+        >
+        <button type="submit" class="btn primary" data-wordchain-submit>Send</button>
+      </div>
+    </form>
+    <ul class="wordchain-log" data-wordchain-log aria-live="polite">
+      <li class="wordchain-log-placeholder" data-wordchain-empty>
+        Play a word to see the dialogue with the bot.
+      </li>
+    </ul>
+  </section>
+
+  <section class="wordchain-grid">
+    <article class="wordchain-card">
+      <p class="section-label">Rules snapshot</p>
+      <h3>Warm-up checklist</h3>
+      <p class="muted">A quick refresher before you tap one of the modes.</p>
+      <ul class="wordchain-checklist">
+        <li><span>Start with any word. Player two must begin with its last letter.</span></li>
+        <li><span>No repeats during a session, even if you switch languages.</span></li>
+        <li><span>Set a response timer (default 5 seconds) to keep the pace electric.</span></li>
+      </ul>
+    </article>
+
+    <article class="wordchain-card">
+      <p class="section-label">Available modes</p>
+      <h3>Create your match</h3>
+      <div class="mode-list">
+        <div class="mode-item">
+          <div class="mode-icon" aria-hidden="true">BOT</div>
+          <div>
+            <h4>Bot sparring</h4>
+            <p class="muted">Great for solo training. Increase the difficulty to reduce the bot's hesitation time.</p>
+          </div>
+        </div>
+        <div class="mode-item">
+          <div class="mode-icon" aria-hidden="true">VS</div>
+          <div>
+            <h4>Friend battle</h4>
+            <p class="muted">Create a private passphrase and track turns on one screen or two synced browsers.</p>
+          </div>
+        </div>
+        <div class="mode-item">
+          <div class="mode-icon" aria-hidden="true">LGT</div>
+          <div>
+            <h4>Lightning relay</h4>
+            <p class="muted">Ideal for warmups in group lessons—each miss hands the streak to the next partner.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="wordchain-cta">
+    <div class="cta-card">
+      <div>
+        <p class="section-label">Prep session</p>
+        <h3>Build a themed deck</h3>
+        <p class="muted">Pick travel, work, or slang decks before challenging the bot or your friends to make hints contextual.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="{{ url_for('flashcard_page') }}" class="link-btn">Open decks</a>
+        <a href="{{ url_for('random_page') }}" class="link-btn">Find inspiration</a>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/main-app.js') }}"></script>
+{% endblock %}

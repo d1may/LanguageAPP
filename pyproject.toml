@@ -7,7 +7,7 @@ name = "project"
 version = "0.1.0"
 description = "..."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 dependencies = [
     "alembic>=1.17.1",
@@ -25,6 +25,9 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "datetime>=6.0",
+    "spellchecker>=0.4",
+    "pyspellchecker",
+    "asyncio",
 ]
 
 [tool.setuptools.packages.find]

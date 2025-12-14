@@ -114,6 +114,7 @@ body.flashcard{
 .card-panel{
   display:flex;
   flex-direction:column;
+  gap:16px;
 }
 
 .panel-head{
@@ -227,12 +228,6 @@ body.flashcard{
   line-height:1.2;
   max-width:150px;
   word-break:break-word;
-}
-
-.card-panel{
-  display:flex;
-  flex-direction:column;
-  gap:24px;
 }
 
 .card-filter{

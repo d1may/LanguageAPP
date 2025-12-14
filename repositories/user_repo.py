@@ -63,6 +63,18 @@ class UserRepository:
         self.db.refresh(user)
         return {"session_words": self._zero_or_value(user.random_session_words)}
 
+    def refresh_random_session_words(self, user_id: int) -> dict:
+        user = self.get_by_id(user_id)
+        if user is None:
+            raise ValueError("User not found")
+
+        user.random_session_words = 0
+
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return {"session_words": 0}
+
     def record_wordle_result(self, user_id: int, *, is_win: bool) -> dict:
         user = self.get_by_id(user_id)
         if user is None:
