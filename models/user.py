@@ -10,7 +10,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     random_word_lang = Column(String(2), nullable=False, server_default="en")
-    theme = Column(String(20), nullable=False, server_default="amber")
+    theme = Column(String(20), nullable=False, server_default="arctic")
     wordle_game = Column(Integer, nullable=False, server_default="0")
     wordle_wins = Column(Integer, nullable=False, server_default="0")
     wordle_losses = Column(Integer, nullable=False, server_default="0")

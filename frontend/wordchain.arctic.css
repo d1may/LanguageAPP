@@ -38,17 +38,29 @@
   min-width:160px;
 }
 
+.btn.friend-battle{
+  background:linear-gradient(135deg,#77d496,#50c878);
+  color:#144123;
+  box-shadow:0 10px 30px rgba(6,182,212,.35);
+}
+
 .wordchain-metrics{
   list-style:none;
-  margin:0;
   padding:0;
   display:flex;
-  gap:24px;
+  gap:64px;
+  margin-left: 1vw;
   flex-wrap:wrap;
+  margin-top: 10vh;
 }
 
 .wordchain-metrics li{
   min-width:140px;
+}
+
+.name-btn{
+  font-size: 16px;
+  text-align: left;
 }
 
 .metric-label{
@@ -381,7 +393,20 @@
   border-radius:16px;
   border:1px solid rgba(50,192,232,.2);
   padding:14px;
+  align-items: center;
   background:#f5fbff;
+  transition: background 0.3s ease;
+}
+
+.mode-item.bot{
+  border:3px solid rgb(27, 197, 245);
+}
+.mode-icon.bot:hover{
+  background: rgb(27, 197, 245);
+}
+
+.mode-item.friend{
+  border:3px solid rgb(0, 213, 89);
 }
 
 .mode-icon{
@@ -394,6 +419,7 @@
   justify-content:center;
   font-size:22px;
 }
+
 
 .mode-item h4{
   margin:0 0 4px;

@@ -1,5 +1,5 @@
 const THEME_STORAGE_KEY = "app-theme";
-const FALLBACK_THEME = "amber";
+const FALLBACK_THEME = "arctic";
 const NORMALIZED_THEMES = new Set([FALLBACK_THEME]);
 let activeTheme;
 

@@ -33,7 +33,6 @@ config = AuthXConfig(
 
 security = AuthX(config=config)
 
-
 def _decode_token(token: str) -> TokenPayload:
     return TokenPayload.decode(
         token=token,

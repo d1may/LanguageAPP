@@ -26,7 +26,19 @@ const DEFAULT_SNAPSHOT = {
 function updateLangBadge() {
   const badge = qs("#word-lang");
   if (!badge) return;
-  badge.textContent = currentLang === "de" ? "German" : "English";
+  badge.textContent = currentLang === "de" ? "🇩🇪 Deutsch" : "🇬🇧 English";
+}
+
+function updateLanguageUI() {
+  const label = qs("#words-language");
+  if (label) {
+    label.textContent = LANG_LABEL[currentLang] || LANG_LABEL.en;
+  }
+
+  langInputs = Array.from(document.querySelectorAll('input[name="rw-lang"]'));
+  langInputs.forEach((input) => {
+    input.checked = input.value === currentLang;
+  });
 }
 
 function updateSessionBadge() {
@@ -377,7 +389,8 @@ function initWordChainGame() {
     applyFormState();
     setHint("Checking word…");
     try {
-      const addResponse = await api(PATHS.wordChainAdd(normalized), "GET");
+      const langKey = currentLang === "de" ? "de" : "en";
+      const addResponse = await api(`${PATHS.wordChainAdd(normalized)}${langKey}`, "POST");
       if (addResponse && addResponse.status === "False") {
         throw new Error(addResponse.comment || "Word rejected.");
       }
@@ -391,7 +404,7 @@ function initWordChainGame() {
       waitingForBot = true;
       stopTurnTimer();
       setHint("Bot is thinking…");
-      const botReply = await api(PATHS.wordChainBot, "POST", { word: normalized });
+      const botReply = await api(`${PATHS.wordChainBot}${langKey}`, "POST", { word: normalized });
       if (!botReply || !botReply.word) {
         waitingForBot = false;
         finishMatch("Bot surrendered. Streak is yours!");
@@ -2224,6 +2237,7 @@ async function loadSettings() {
     currentLang = data.random_word_lang || "en";
     currentTheme = data.theme || currentTheme;
     updateLangBadge();
+    updateLanguageUI();
     applyTheme(currentTheme);
     updateThemeRadios();
 
@@ -2239,7 +2253,7 @@ async function loadSettings() {
     updateLangBadge();
     applyTheme(currentTheme, false);
     updateThemeRadios();
-  }
+  } 
 }
 
 async function loadSessionWords() {
@@ -2532,5 +2546,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
 });

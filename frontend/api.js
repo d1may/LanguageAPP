@@ -25,8 +25,8 @@ export const PATHS = {
   flashcardDeckExport: (deckId) => `/flashcard/export/flashcard_csv?deck_id=${encodeURIComponent(deckId)}`,
   flashcardImport: "/flashcard/import",
   flashcardStats: "/flashcard/stats",
-  wordChainAdd: (word) => `/word_chain/add_word/${encodeURIComponent(word)}`,
-  wordChainBot: "/word_chain/bot_word",
+  wordChainAdd: (word) => `/word_chain/add_word/${encodeURIComponent(word)}/`,
+  wordChainBot: "/word_chain/bot_word/",
   wordChainClear: "/word_chain",
 };
 

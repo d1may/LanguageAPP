@@ -16,8 +16,8 @@ let secretWord = "";
 let awaitingRestart = false;
 
 const LANG_LABEL = {
-  en: "English",
-  de: "Deutsch",
+  en: "🇬🇧 English",
+  de: "🇩🇪 Deutsch",
 };
 
 const KEYBOARD_LAYOUTS = {
